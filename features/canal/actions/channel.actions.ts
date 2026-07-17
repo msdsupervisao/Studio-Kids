@@ -1,0 +1,162 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/services/supabase/server";
+import { createStorageService } from "@/services/storage/storage.service";
+import { channelSchema } from "@/lib/validations";
+import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
+import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
+import type { ChannelWithStats } from "@/types/channel.types";
+
+export async function getChannelBySlug(slug: string): Promise<ChannelWithStats | null> {
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from("channels")
+    .select("*, owner:profiles ( id, username, full_name, avatar_url )")
+    .eq("slug", slug)
+    .single();
+
+  if (error || !data || !data.owner) return null;
+
+  const [{ count: subscribersCount }, { count: videosCount }, subscription] = await Promise.all([
+    supabase.from("subscriptions").select("*", { count: "exact", head: true }).eq("channel_id", data.id),
+    supabase
+      .from("videos")
+      .select("*", { count: "exact", head: true })
+      .eq("channel_id", data.id)
+      .eq("status", "published"),
+    user
+      ? supabase
+          .from("subscriptions")
+          .select("channel_id")
+          .eq("channel_id", data.id)
+          .eq("subscriber_id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return {
+    ...data,
+    owner: data.owner,
+    avatar_url: storage.getPublicUrl(STORAGE_BUCKETS.avatars, data.avatar_url),
+    banner_url: storage.getPublicUrl(STORAGE_BUCKETS.banners, data.banner_url),
+    subscribersCount: subscribersCount ?? 0,
+    videosCount: videosCount ?? 0,
+    isSubscribed: Boolean(subscription?.data),
+  };
+}
+
+export async function getMyChannels() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("channels")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(`Falha ao carregar seus canais: ${error.message}`);
+  return data ?? [];
+}
+
+export interface ChannelActionState {
+  error?: string;
+  success?: boolean;
+}
+
+export async function createChannel(
+  _prevState: ChannelActionState,
+  formData: FormData
+): Promise<ChannelActionState> {
+  const parsed = channelSchema.safeParse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+
+  const { error } = await supabase.from("channels").insert({
+    owner_id: user.id,
+    name: sanitizePlainText(parsed.data.name),
+    slug: parsed.data.slug,
+    description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
+  });
+
+  if (error) {
+    if (error.code === "23505") return { error: "Ja existe um canal com esse endereco" };
+    return { error: "Nao foi possivel criar o canal" };
+  }
+
+  revalidatePath(ROUTES.professorChannels);
+  return { success: true };
+}
+
+export async function updateChannel(
+  channelId: string,
+  _prevState: ChannelActionState,
+  formData: FormData
+): Promise<ChannelActionState> {
+  const parsed = channelSchema.safeParse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+  }
+
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+
+  const avatarFile = formData.get("avatarFile");
+  const bannerFile = formData.get("bannerFile");
+  let avatarPath: string | undefined;
+  let bannerPath: string | undefined;
+
+  if (avatarFile instanceof File && avatarFile.size > 0) {
+    avatarPath = `${channelId}/avatar-${Date.now()}.${avatarFile.name.split(".").pop() ?? "jpg"}`;
+    await storage.upload(STORAGE_BUCKETS.avatars, avatarPath, avatarFile);
+  }
+  if (bannerFile instanceof File && bannerFile.size > 0) {
+    bannerPath = `${channelId}/banner-${Date.now()}.${bannerFile.name.split(".").pop() ?? "jpg"}`;
+    await storage.upload(STORAGE_BUCKETS.banners, bannerPath, bannerFile);
+  }
+
+  const { error } = await supabase
+    .from("channels")
+    .update({
+      name: sanitizePlainText(parsed.data.name),
+      slug: parsed.data.slug,
+      description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
+      ...(avatarPath ? { avatar_url: avatarPath } : {}),
+      ...(bannerPath ? { banner_url: bannerPath } : {}),
+    })
+    .eq("id", channelId);
+
+  if (error) {
+    if (error.code === "23505") return { error: "Ja existe um canal com esse endereco" };
+    return { error: "Nao foi possivel salvar as alteracoes" };
+  }
+
+  revalidatePath(ROUTES.channel(parsed.data.slug));
+  revalidatePath(ROUTES.myChannel);
+  return { success: true };
+}
