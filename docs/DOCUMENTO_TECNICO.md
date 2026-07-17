@@ -1,4 +1,4 @@
-# EduTube — Documento Tecnico
+# Studio Kids — Documento Tecnico
 
 ## 1. Stack e por que
 

@@ -1,4 +1,4 @@
-# EduTube — Checklist
+# Studio Kids — Checklist
 
 Status honesto do que existe hoje no codigo, nao uma lista de aspiracoes. ✅ = implementado e testado (build + typecheck + smoke test manual) · 🟡 = existe parcialmente / versao simplificada · ⬜ = nao implementado (ver ROADMAP.md).
 

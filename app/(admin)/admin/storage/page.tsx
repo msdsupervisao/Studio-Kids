@@ -17,7 +17,7 @@ export default async function AdminStoragePage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Storage</h1>
         <p className="text-sm text-muted-foreground">
-          Visao rapida dos buckets do Supabase Storage usados pelo EduTube.
+          Visao rapida dos buckets do Supabase Storage usados pelo Studio Kids.
         </p>
       </div>
       <StatsCards

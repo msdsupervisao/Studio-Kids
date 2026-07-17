@@ -1,8 +1,8 @@
-# EduTube — Documento Funcional
+# Studio Kids — Documento Funcional
 
 ## 1. Visao do produto
 
-EduTube e um marketplace aberto de video-aulas: qualquer pessoa pode criar uma conta, e quem quer ensinar cria um canal e publica videos; quem quer aprender assiste, se inscreve em canais e comenta. E o modelo YouTube/Udemy, nao um LMS institucional fechado — nao ha turmas obrigatorias nem matricula paga no MVP.
+Studio Kids e um marketplace aberto de video-aulas: qualquer pessoa pode criar uma conta, e quem quer ensinar cria um canal e publica videos; quem quer aprender assiste, se inscreve em canais e comenta. E o modelo YouTube/Udemy, nao um LMS institucional fechado — nao ha turmas obrigatorias nem matricula paga no MVP.
 
 **Decisao registrada:** modelo de marketplace aberto foi escolhido explicitamente (em vez de plataforma institucional ou corporativa) porque maximiza a velocidade de crescimento de catalogo — qualquer professor pode publicar sem esperar um admin cadastra-lo manualmente — ao custo de exigir moderacao de conteudo pos-publicacao, que o MVP resolve com uma fila de aprovacao antes do video ficar publico.
 
@@ -14,7 +14,7 @@ Estudante universitaria buscando complementar o aprendizado formal com aulas gra
 ### Persona 2 — Professor/Criador (Marcelo, 34 anos)
 Professor de cursinho que quer expandir alcance publicando aulas gravadas. Nao e desenvolvedor nem editor de video profissional. Valoriza: processo de upload simples, entender por que um video foi rejeitado, ver quantas pessoas assistiram.
 
-### Persona 3 — Moderador/Admin (equipe EduTube)
+### Persona 3 — Moderador/Admin (equipe Studio Kids)
 Responsavel por manter qualidade minima do catalogo (nada ofensivo, nada com audio/video quebrado, titulo condizente com o conteudo). Valoriza: fila de moderacao curta e rapida de processar, capacidade de rejeitar com motivo claro.
 
 ## 3. Papeis e permissoes

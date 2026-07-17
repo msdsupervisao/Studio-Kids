@@ -1,4 +1,4 @@
--- EduTube — Row Level Security
+-- Studio Kids — Row Level Security
 -- Principio: nada e liberado por padrao. Cada tabela tem RLS habilitado e
 -- so as operacoes explicitamente descritas abaixo sao permitidas.
 

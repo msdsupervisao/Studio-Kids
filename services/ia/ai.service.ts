@@ -41,7 +41,7 @@ export function getAIProvider(): AIProvider {
   return cachedProvider;
 }
 
-const METADATA_SYSTEM_PROMPT = `Voce e um assistente que ajuda professores a publicar aulas em video no EduTube.
+const METADATA_SYSTEM_PROMPT = `Voce e um assistente que ajuda professores a publicar aulas em video no Studio Kids.
 Dado um titulo provisorio e uma descricao (opcionalmente incompleta) de uma aula, responda SOMENTE com um JSON
 no formato {"title": string, "description": string, "tags": string[]}, sem markdown, sem texto fora do JSON.
 O titulo deve ter no maximo 100 caracteres, ser claro e atrativo. A descricao deve ter 2 a 4 paragrafos curtos,

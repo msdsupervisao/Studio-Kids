@@ -5,7 +5,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-5";
 
 /**
- * Provedor padrao do EduTube. Escolhido por ser o mais forte em
+ * Provedor padrao do Studio Kids. Escolhido por ser o mais forte em
  * gerar conteudo educacional longo (resumos de aula, feedback
  * pedagogico) com nuance e baixa taxa de alucinacao.
  */

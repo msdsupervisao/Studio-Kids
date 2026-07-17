@@ -13,7 +13,7 @@ export function createOpenRouterProvider(apiKey: string): AIProvider {
           "content-type": "application/json",
           authorization: `Bearer ${apiKey}`,
           "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-          "X-Title": "EduTube",
+          "X-Title": "Studio Kids",
         },
         body: JSON.stringify({
           model: DEFAULT_MODEL,

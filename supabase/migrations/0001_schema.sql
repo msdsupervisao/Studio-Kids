@@ -1,4 +1,4 @@
--- EduTube — schema inicial
+-- Studio Kids — schema inicial
 -- Marketplace aberto: qualquer usuario com role "professor" pode criar um
 -- canal e publicar videos; a publicacao passa por aprovacao (status
 -- "pending" -> "published"/"rejected") para manter qualidade minima.

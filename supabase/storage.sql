@@ -1,4 +1,4 @@
--- EduTube — Storage buckets
+-- Studio Kids — Storage buckets
 -- Convencao de path:
 --   videos/{channel_id}/{video_id}.mp4
 --   thumbnails/{channel_id}/{video_id}.jpg

@@ -20,7 +20,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
   return (
     <div className="w-full max-w-lg space-y-6">
       <div className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Como voce vai usar o EduTube?</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Como voce vai usar o Studio Kids?</h1>
         <p className="text-sm text-muted-foreground">Voce pode mudar isso depois nas configuracoes.</p>
       </div>
 
@@ -74,7 +74,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
               <div className="space-y-1.5">
                 <Label htmlFor="channelSlug">Endereco do canal</Label>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <span>edutube.com/canal/</span>
+                  <span>studiokids.com/canal/</span>
                   <Input
                     id="channelSlug"
                     name="channelSlug"

@@ -1,4 +1,4 @@
-# EduTube — Roadmap
+# Studio Kids — Roadmap
 
 ## Fase 0 — MVP (concluida nesta iteracao)
 

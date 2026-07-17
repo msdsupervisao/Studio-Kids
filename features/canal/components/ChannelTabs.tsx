@@ -55,7 +55,7 @@ export function ChannelTabs({
       <TabsContent value="sobre">
         <div className="max-w-2xl space-y-2 text-sm">
           <p className="text-foreground">{description || "Este canal ainda nao tem uma descricao."}</p>
-          <p className="text-muted-foreground">No EduTube desde {formatRelativeDate(createdAt)}</p>
+          <p className="text-muted-foreground">No Studio Kids desde {formatRelativeDate(createdAt)}</p>
         </div>
       </TabsContent>
     </Tabs>

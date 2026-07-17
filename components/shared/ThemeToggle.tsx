@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const THEME_STORAGE_KEY = "edutube-theme";
+const THEME_STORAGE_KEY = "studio-kids-theme";
 
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);

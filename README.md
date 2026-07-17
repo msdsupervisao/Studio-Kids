@@ -1,4 +1,4 @@
-# EduTube
+# Studio Kids
 
 Plataforma de video-aulas em formato marketplace aberto: qualquer professor cria um canal e publica aulas em video; qualquer aluno assiste, se inscreve e comenta. Publicacoes passam por moderacao (admin) antes de ficarem publicas.
 

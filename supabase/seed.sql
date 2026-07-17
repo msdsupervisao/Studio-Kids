@@ -1,4 +1,4 @@
--- EduTube — dados iniciais
+-- Studio Kids — dados iniciais
 -- Usuarios de teste nao sao semeados aqui: senhas devem passar pelo
 -- fluxo de auth do Supabase (hash bcrypt via GoTrue), nao por INSERT
 -- direto em auth.users. Para testar localmente, cadastre-se em /login

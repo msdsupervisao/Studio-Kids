@@ -1,4 +1,4 @@
-export const APP_NAME = "EduTube";
+export const APP_NAME = "Studio Kids";
 export const APP_DESCRIPTION =
   "A plataforma onde professores publicam aulas em video e alunos aprendem no seu ritmo.";
 

@@ -25,7 +25,7 @@ export default async function UploadPage() {
       <EmptyState
         icon={ShieldAlert}
         title="Apenas professores podem enviar videos"
-        description="Fale com a nossa equipe se voce quer se tornar um professor no EduTube."
+        description="Fale com a nossa equipe se voce quer se tornar um professor no Studio Kids."
       />
     );
   }
