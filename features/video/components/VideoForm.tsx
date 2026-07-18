@@ -9,10 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { VideoUploadDropzone } from "@/features/video/components/VideoUploadDropzone";
 import { AIGenerateButton } from "@/features/ia/components/AIGenerateButton";
 import { useUpload } from "@/hooks/use-upload";
+import { cn } from "@/lib/utils";
 import type { Channel } from "@/types/channel.types";
 import type { Database } from "@/types/database.types";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
+
+const SHORT_MAX_SECONDS = 60;
 
 export function VideoForm({ channels, categories }: { channels: Channel[]; categories: Category[] }) {
   const [title, setTitle] = useState("");
@@ -22,11 +25,14 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [duration, setDuration] = useState(0);
+  const [isShort, setIsShort] = useState(false);
   const { submit, isSubmitting } = useUpload();
+
+  const shortTooLong = isShort && duration > SHORT_MAX_SECONDS;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!videoFile || !channelId) return;
+    if (!videoFile || !channelId || shortTooLong) return;
 
     await submit({
       channelId,
@@ -36,12 +42,45 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
       videoFile,
       thumbnailFile,
       durationSeconds: duration,
+      isShort,
     });
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <VideoUploadDropzone onFileSelected={setVideoFile} onDurationDetected={setDuration} />
+
+      <div className="space-y-1.5">
+        <Label>Tipo de video</Label>
+        <div className="inline-flex rounded-lg border border-border p-1">
+          <button
+            type="button"
+            onClick={() => setIsShort(false)}
+            className={cn(
+              "focus-ring rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              !isShort ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Video normal
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsShort(true)}
+            className={cn(
+              "focus-ring rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              isShort ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Short
+          </button>
+        </div>
+        {shortTooLong && (
+          <p className="text-sm text-destructive">
+            Shorts devem ter ate {SHORT_MAX_SECONDS} segundos — esse video tem {duration}s. Escolha outro arquivo ou
+            envie como video normal.
+          </p>
+        )}
+      </div>
 
       {channels.length > 1 && (
         <div className="space-y-1.5">
@@ -121,8 +160,8 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
         />
       </div>
 
-      <Button type="submit" disabled={!videoFile || !channelId || isSubmitting} className="w-full">
-        {isSubmitting ? "Enviando..." : "Enviar para analise"}
+      <Button type="submit" disabled={!videoFile || !channelId || isSubmitting || shortTooLong} className="w-full">
+        {isSubmitting ? "Enviando..." : isShort ? "Enviar Short para analise" : "Enviar para analise"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
         Seu video ficara visivel apos a aprovacao da nossa equipe.

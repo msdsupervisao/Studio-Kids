@@ -7,6 +7,12 @@ const usernameSchema = z
   .max(30, "Maximo de 30 caracteres")
   .regex(/^[a-z0-9_.]+$/, "Use apenas letras minusculas, numeros, ponto e underline");
 
+const passwordSchema = z
+  .string()
+  .min(8, "Minimo de 8 caracteres")
+  .regex(/[A-Z]/, "Inclua ao menos uma letra maiuscula")
+  .regex(/[0-9]/, "Inclua ao menos um numero");
+
 export const loginSchema = z.object({
   email: z.string().email("E-mail invalido"),
   password: z.string().min(1, "Informe sua senha"),
@@ -17,11 +23,7 @@ export const signupSchema = z.object({
   fullName: z.string().min(2, "Informe seu nome completo").max(100),
   username: usernameSchema,
   email: z.string().email("E-mail invalido"),
-  password: z
-    .string()
-    .min(8, "Minimo de 8 caracteres")
-    .regex(/[A-Z]/, "Inclua ao menos uma letra maiuscula")
-    .regex(/[0-9]/, "Inclua ao menos um numero"),
+  password: passwordSchema,
 });
 export type SignupInput = z.infer<typeof signupSchema>;
 
@@ -29,6 +31,17 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("E-mail invalido"),
 });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas nao coincidem",
+    path: ["confirmPassword"],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 export const channelSchema = z.object({
   name: z.string().min(2, "Minimo de 2 caracteres").max(60),

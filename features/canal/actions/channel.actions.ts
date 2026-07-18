@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { channelSchema } from "@/lib/validations";
-import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
 import type { ChannelWithStats } from "@/types/channel.types";
 
@@ -18,7 +18,7 @@ export async function getChannelBySlug(slug: string): Promise<ChannelWithStats |
 
   const { data, error } = await supabase
     .from("channels")
-    .select("*, owner:profiles ( id, username, full_name, avatar_url )")
+    .select("*, owner:profiles!channels_owner_id_fkey ( id, username, full_name, avatar_url )")
     .eq("slug", slug)
     .single();
 
@@ -52,8 +52,39 @@ export async function getChannelBySlug(slug: string): Promise<ChannelWithStats |
   };
 }
 
+export async function searchChannels(query: string) {
+  if (!query.trim()) return [];
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+
+  const { data, error } = await supabase
+    .from("channels")
+    .select("id, slug, name, avatar_url")
+    .ilike("name", `%${query}%`)
+    .limit(PAGE_SIZE.search);
+
+  if (error) throw new Error(`Falha na busca de canais: ${error.message}`);
+
+  return Promise.all(
+    (data ?? []).map(async (channel) => {
+      const { count } = await supabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("channel_id", channel.id);
+
+      return {
+        slug: channel.slug,
+        name: channel.name,
+        avatar_url: storage.getPublicUrl(STORAGE_BUCKETS.avatars, channel.avatar_url),
+        subscribersCount: count ?? 0,
+      };
+    })
+  );
+}
+
 export async function getMyChannels() {
   const supabase = await createClient();
+  const storage = createStorageService(supabase);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -66,7 +97,11 @@ export async function getMyChannels() {
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(`Falha ao carregar seus canais: ${error.message}`);
-  return data ?? [];
+  return (data ?? []).map((channel) => ({
+    ...channel,
+    avatar_url: storage.getPublicUrl(STORAGE_BUCKETS.avatars, channel.avatar_url),
+    banner_url: storage.getPublicUrl(STORAGE_BUCKETS.banners, channel.banner_url),
+  }));
 }
 
 export interface ChannelActionState {

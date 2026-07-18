@@ -4,13 +4,14 @@ import {
   FolderCog,
   Home,
   LayoutGrid,
-  ListVideo,
+  LibraryBig,
   Settings,
   Shield,
   Tags,
   Upload,
   Users,
   Video,
+  Zap,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -22,8 +23,9 @@ export interface NavItem {
 
 export const APP_NAV_ITEMS: NavItem[] = [
   { label: "Inicio", href: ROUTES.home, icon: Home },
+  { label: "Shorts", href: ROUTES.shorts, icon: Zap },
   { label: "Explorar", href: ROUTES.explore, icon: LayoutGrid },
-  { label: "Playlists", href: ROUTES.playlists, icon: ListVideo },
+  { label: "Biblioteca", href: ROUTES.library, icon: LibraryBig },
 ];
 
 export const PROFESSOR_NAV_ITEMS: NavItem[] = [

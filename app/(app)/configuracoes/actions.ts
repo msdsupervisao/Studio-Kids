@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
+import { changePasswordSchema } from "@/lib/validations";
 import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
 
 export interface ProfileActionState {
@@ -59,5 +60,34 @@ export async function updateProfile(
 
   revalidatePath(ROUTES.settings);
   revalidatePath(ROUTES.profile);
+  return { success: true };
+}
+
+export interface PasswordActionState {
+  error?: string;
+  success?: boolean;
+}
+
+export async function updatePassword(
+  _prevState: PasswordActionState,
+  formData: FormData
+): Promise<PasswordActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+
+  const parsed = changePasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: "Nao foi possivel alterar a senha. Tente novamente." };
+
   return { success: true };
 }

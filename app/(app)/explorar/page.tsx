@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Compass } from "lucide-react";
 import { listCategories, listPublishedVideos } from "@/features/video/actions/video.actions";
 import { VideoCard } from "@/components/shared/VideoCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { CategoryFilterBar } from "@/components/shared/CategoryFilterBar";
 import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Explorar" };
 
@@ -22,31 +21,7 @@ export default async function ExplorePage({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <Link
-          href={ROUTES.explore}
-          className={cn(
-            "focus-ring shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-            !categoria ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-secondary"
-          )}
-        >
-          Todas
-        </Link>
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`${ROUTES.explore}?categoria=${category.slug}`}
-            className={cn(
-              "focus-ring shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-              categoria === category.slug
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:bg-secondary"
-            )}
-          >
-            {category.name}
-          </Link>
-        ))}
-      </div>
+      <CategoryFilterBar categories={categories} activeSlug={categoria} basePath={ROUTES.explore} />
 
       {videos.length === 0 ? (
         <EmptyState icon={Compass} title="Nenhum video nessa categoria ainda" />

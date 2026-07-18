@@ -5,6 +5,21 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { loginSchema, signupSchema, forgotPasswordSchema } from "@/lib/validations";
 import { ROUTES } from "@/lib/constants";
+import type { CurrentUser } from "@/types/user.types";
+
+/** Usuario autenticado + profile, verificado no servidor (seguro para hidratar componentes client). */
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  if (!profile) return null;
+
+  return { id: user.id, email: user.email ?? "", profile };
+}
 
 export interface AuthActionState {
   error?: string;

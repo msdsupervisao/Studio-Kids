@@ -6,7 +6,7 @@ import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { playlistSchema } from "@/lib/validations";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
-import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
 import type { PlaylistWithVideos } from "@/types/playlist.types";
 import type { VideoCardData } from "@/types/video.types";
 
@@ -24,6 +24,25 @@ export async function listMyPlaylists(): Promise<PlaylistWithVideos[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Falha ao carregar playlists: ${error.message}`);
+
+  return (data ?? []).map((playlist) => ({
+    ...playlist,
+    videos: [] as VideoCardData[],
+    videosCount: playlist.playlist_videos?.length ?? 0,
+  }));
+}
+
+export async function searchPlaylists(query: string): Promise<PlaylistWithVideos[]> {
+  if (!query.trim()) return [];
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("*, playlist_videos ( video_id )")
+    .ilike("title", `%${query}%`)
+    .limit(PAGE_SIZE.search);
+
+  if (error) throw new Error(`Falha na busca de playlists: ${error.message}`);
 
   return (data ?? []).map((playlist) => ({
     ...playlist,

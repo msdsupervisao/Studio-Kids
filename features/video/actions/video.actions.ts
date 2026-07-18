@@ -6,43 +6,8 @@ import { createStorageService } from "@/services/storage/storage.service";
 import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
 import { slugify } from "@/utils/slug";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
-import type { VideoCardData, VideoPlaybackData, VideoStatus } from "@/types/video.types";
-
-const VIDEO_CARD_SELECT = `
-  id, slug, title, thumbnail_path, duration_seconds, views_count, published_at,
-  channel:channels ( slug, name, avatar_url )
-`;
-
-type VideoCardRow = {
-  id: string;
-  slug: string;
-  title: string;
-  thumbnail_path: string | null;
-  duration_seconds: number;
-  views_count: number;
-  published_at: string | null;
-  channel: { slug: string; name: string; avatar_url: string | null } | null;
-};
-
-function toVideoCardData(
-  row: VideoCardRow,
-  getThumbnailUrl: (path: string | null) => string | null
-): VideoCardData {
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    thumbnailUrl: getThumbnailUrl(row.thumbnail_path),
-    durationSeconds: row.duration_seconds,
-    viewsCount: row.views_count,
-    publishedAt: row.published_at,
-    channel: {
-      slug: row.channel?.slug ?? "",
-      name: row.channel?.name ?? "Canal removido",
-      avatarUrl: row.channel?.avatar_url ?? null,
-    },
-  };
-}
+import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import type { VideoPlaybackData, VideoStatus } from "@/types/video.types";
 
 export async function listPublishedVideos(options: { limit?: number; categorySlug?: string } = {}) {
   const supabase = await createClient();
@@ -52,6 +17,7 @@ export async function listPublishedVideos(options: { limit?: number; categorySlu
     .from("videos")
     .select(VIDEO_CARD_SELECT)
     .eq("status", "published")
+    .eq("is_short", false)
     .order("published_at", { ascending: false })
     .limit(options.limit ?? PAGE_SIZE.videoGrid);
 
@@ -69,7 +35,13 @@ export async function listPublishedVideos(options: { limit?: number; categorySlu
   const { data, error } = await query.overrideTypes<VideoCardRow[]>();
   if (error) throw new Error(`Falha ao carregar videos: ${error.message}`);
 
-  return (data ?? []).map((row) => toVideoCardData(row, (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path)));
+  return (data ?? []).map((row) =>
+    toVideoCardData(
+      row,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+    )
+  );
 }
 
 export async function searchVideos(query: string) {
@@ -81,13 +53,20 @@ export async function searchVideos(query: string) {
     .from("videos")
     .select(VIDEO_CARD_SELECT)
     .eq("status", "published")
+    .eq("is_short", false)
     .ilike("title", `%${query}%`)
     .order("views_count", { ascending: false })
     .limit(PAGE_SIZE.search)
     .overrideTypes<VideoCardRow[]>();
 
   if (error) throw new Error(`Falha na busca: ${error.message}`);
-  return (data ?? []).map((row) => toVideoCardData(row, (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path)));
+  return (data ?? []).map((row) =>
+    toVideoCardData(
+      row,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+    )
+  );
 }
 
 export async function listVideosByChannel(channelId: string) {
@@ -98,15 +77,20 @@ export async function listVideosByChannel(channelId: string) {
   // status para o dono do canal ou admin.
   const { data, error } = await supabase
     .from("videos")
-    .select(`${VIDEO_CARD_SELECT}, status`)
+    .select(`${VIDEO_CARD_SELECT}, status, is_short`)
     .eq("channel_id", channelId)
     .order("created_at", { ascending: false })
-    .overrideTypes<Array<VideoCardRow & { status: VideoStatus }>>();
+    .overrideTypes<Array<VideoCardRow & { status: VideoStatus; is_short: boolean }>>();
 
   if (error) throw new Error(`Falha ao carregar videos do canal: ${error.message}`);
   return (data ?? []).map((row) => ({
-    ...toVideoCardData(row, (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path)),
+    ...toVideoCardData(
+      row,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+    ),
     status: row.status,
+    isShort: row.is_short,
   }));
 }
 
@@ -123,7 +107,11 @@ export async function listPendingVideos() {
 
   if (error) throw new Error(`Falha ao carregar videos pendentes: ${error.message}`);
   return (data ?? []).map((row) => ({
-    ...toVideoCardData(row, (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path)),
+    ...toVideoCardData(
+      row,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+    ),
     status: row.status,
   }));
 }
@@ -169,7 +157,10 @@ export async function getVideoDetail(id: string): Promise<VideoPlaybackData | nu
 
   return {
     ...data,
-    channel: data.channel,
+    channel: {
+      ...data.channel,
+      avatar_url: storage.getPublicUrl(STORAGE_BUCKETS.avatars, data.channel.avatar_url),
+    },
     videoUrl: storage.getPublicUrl(STORAGE_BUCKETS.videos, data.video_path) ?? "",
     thumbnailUrl: storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, data.thumbnail_path),
     isSubscribed,
@@ -185,6 +176,7 @@ export async function getRelatedVideos(videoId: string, channelId: string) {
     .from("videos")
     .select(VIDEO_CARD_SELECT)
     .eq("status", "published")
+    .eq("is_short", false)
     .eq("channel_id", channelId)
     .neq("id", videoId)
     .order("published_at", { ascending: false })
@@ -192,7 +184,13 @@ export async function getRelatedVideos(videoId: string, channelId: string) {
     .overrideTypes<VideoCardRow[]>();
 
   if (error) throw new Error(`Falha ao carregar videos relacionados: ${error.message}`);
-  return (data ?? []).map((row) => toVideoCardData(row, (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path)));
+  return (data ?? []).map((row) =>
+    toVideoCardData(
+      row,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+    )
+  );
 }
 
 export async function listCategories() {
@@ -210,18 +208,26 @@ export interface UploadVideoInput {
   videoFile: File;
   thumbnailFile: File | null;
   durationSeconds: number;
+  isShort?: boolean;
 }
 
-export async function uploadVideo(input: UploadVideoInput) {
-  const supabase = await createClient();
-  const storage = createStorageService(supabase);
+type CreateDraftVideoInput = Omit<UploadVideoInput, "videoFile" | "thumbnailFile">;
 
+/**
+ * Cria a linha do video sem o arquivo (payload de texto, seguro para
+ * Server Action). O arquivo em si e enviado direto do navegador para o
+ * Supabase Storage (ver hooks/use-upload.ts) — mandar um video de ate 2GB
+ * como argumento de Server Action e instavel, o parser multipart do
+ * Next.js trunca streams grandes com "Unexpected end of form".
+ */
+export async function createDraftVideo(input: CreateDraftVideoInput) {
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Sessao expirada. Faca login novamente.");
 
-  const { data: video, error: insertError } = await supabase
+  const { data: video, error } = await supabase
     .from("videos")
     .insert({
       channel_id: input.channelId,
@@ -231,35 +237,25 @@ export async function uploadVideo(input: UploadVideoInput) {
       description: input.description ? sanitizeMultilineText(input.description) : null,
       video_path: "",
       duration_seconds: input.durationSeconds,
+      is_short: input.isShort ?? false,
       status: "pending",
     })
     .select("id")
     .single();
 
-  if (insertError || !video) {
-    throw new Error(`Falha ao criar video: ${insertError?.message ?? "erro desconhecido"}`);
-  }
+  if (error || !video) throw new Error(`Falha ao criar video: ${error?.message ?? "erro desconhecido"}`);
+  return { videoId: video.id as string };
+}
 
-  const videoExtension = input.videoFile.name.split(".").pop() ?? "mp4";
-  const videoPath = `${input.channelId}/${video.id}.${videoExtension}`;
-  await storage.upload(STORAGE_BUCKETS.videos, videoPath, input.videoFile);
-
-  let thumbnailPath: string | null = null;
-  if (input.thumbnailFile) {
-    const thumbExtension = input.thumbnailFile.name.split(".").pop() ?? "jpg";
-    thumbnailPath = `${input.channelId}/${video.id}.${thumbExtension}`;
-    await storage.upload(STORAGE_BUCKETS.thumbnails, thumbnailPath, input.thumbnailFile);
-  }
-
-  const { error: updateError } = await supabase
+export async function finalizeVideoUpload(videoId: string, videoPath: string, thumbnailPath: string | null) {
+  const supabase = await createClient();
+  const { error } = await supabase
     .from("videos")
     .update({ video_path: videoPath, thumbnail_path: thumbnailPath })
-    .eq("id", video.id);
+    .eq("id", videoId);
 
-  if (updateError) throw new Error(`Falha ao finalizar upload: ${updateError.message}`);
-
+  if (error) throw new Error(`Falha ao finalizar upload: ${error.message}`);
   revalidatePath(ROUTES.professorVideos);
-  return { videoId: video.id as string };
 }
 
 export async function updateVideoStatus(videoId: string, status: VideoStatus, rejectionReason?: string) {
@@ -283,4 +279,76 @@ export async function deleteVideo(videoId: string) {
   const { error } = await supabase.from("videos").delete().eq("id", videoId);
   if (error) throw new Error(`Falha ao remover video: ${error.message}`);
   revalidatePath(ROUTES.professorVideos);
+}
+
+export interface VideoForEdit {
+  id: string;
+  channelId: string;
+  categoryId: string | null;
+  title: string;
+  description: string;
+  thumbnailUrl: string | null;
+}
+
+/** Retorna null se o video nao existe ou o usuario nao e dono do canal / admin. */
+export async function getVideoForEdit(videoId: string): Promise<VideoForEdit | null> {
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("videos")
+    .select("id, channel_id, category_id, title, description, thumbnail_path")
+    .eq("id", videoId)
+    .single();
+  if (error || !data) return null;
+
+  const [{ data: isAdmin }, { data: ownsChannel }] = await Promise.all([
+    supabase.rpc("is_admin"),
+    supabase.rpc("owns_channel", { channel_id_input: data.channel_id }),
+  ]);
+  if (!isAdmin && !ownsChannel) return null;
+
+  return {
+    id: data.id,
+    channelId: data.channel_id,
+    categoryId: data.category_id,
+    title: data.title,
+    description: data.description ?? "",
+    thumbnailUrl: storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, data.thumbnail_path),
+  };
+}
+
+export interface UpdateVideoInput {
+  title: string;
+  description: string;
+  categoryId: string | null;
+}
+
+export async function updateVideo(videoId: string, input: UpdateVideoInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("videos")
+    .update({
+      title: sanitizePlainText(input.title),
+      slug: slugify(input.title),
+      description: input.description ? sanitizeMultilineText(input.description) : null,
+      category_id: input.categoryId,
+    })
+    .eq("id", videoId);
+
+  if (error) throw new Error(`Falha ao salvar alteracoes: ${error.message}`);
+  revalidatePath(ROUTES.professorVideos);
+  revalidatePath(ROUTES.video(videoId));
+}
+
+export async function updateVideoThumbnail(videoId: string, thumbnailPath: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("videos").update({ thumbnail_path: thumbnailPath }).eq("id", videoId);
+  if (error) throw new Error(`Falha ao atualizar miniatura: ${error.message}`);
+  revalidatePath(ROUTES.professorVideos);
+  revalidatePath(ROUTES.video(videoId));
 }

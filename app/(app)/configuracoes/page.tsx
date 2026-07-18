@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/services/supabase/server";
 import { ROUTES } from "@/lib/constants";
 import { ProfileSettingsForm } from "./ProfileSettingsForm";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export const metadata: Metadata = { title: "Configuracoes" };
 
@@ -20,6 +21,11 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold tracking-tight">Configuracoes</h1>
       <ProfileSettingsForm profile={profile} />
+
+      <div className="max-w-md border-t border-border pt-6">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight">Senha</h2>
+        <ChangePasswordForm />
+      </div>
     </div>
   );
 }

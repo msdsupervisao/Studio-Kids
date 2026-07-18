@@ -19,7 +19,7 @@ export function ChannelHeader({
 
   return (
     <div className="space-y-4">
-      <div className="relative h-32 w-full overflow-hidden rounded-xl bg-secondary sm:h-48">
+      <div className="relative h-32 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/70 via-primary/40 to-accent/50 sm:h-48">
         {channel.banner_url && (
           <Image src={channel.banner_url} alt="" fill sizes="100vw" className="object-cover" priority />
         )}

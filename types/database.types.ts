@@ -20,6 +20,7 @@
 
 export type UserRole = "student" | "professor" | "admin";
 export type VideoStatus = "draft" | "pending" | "published" | "rejected";
+export type VideoReactionType = "like" | "dislike";
 
 type ProfilesRow = {
   id: string;
@@ -66,6 +67,7 @@ type VideosRow = {
   status: VideoStatus;
   rejection_reason: string | null;
   views_count: number;
+  is_short: boolean;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -118,6 +120,13 @@ type NotificationsRow = {
   type: string;
   payload: Record<string, unknown>;
   read_at: string | null;
+  created_at: string;
+};
+
+type VideoReactionsRow = {
+  user_id: string;
+  video_id: string;
+  reaction: VideoReactionType;
   created_at: string;
 };
 
@@ -294,6 +303,27 @@ export interface Database {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      video_reactions: {
+        Row: VideoReactionsRow;
+        Insert: Partial<VideoReactionsRow> & { user_id: string; video_id: string; reaction: VideoReactionType };
+        Update: Partial<VideoReactionsRow>;
+        Relationships: [
+          {
+            foreignKeyName: "video_reactions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "video_reactions_video_id_fkey";
+            columns: ["video_id"];
+            isOneToOne: false;
+            referencedRelation: "videos";
             referencedColumns: ["id"];
           },
         ];

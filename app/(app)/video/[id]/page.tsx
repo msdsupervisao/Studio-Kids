@@ -5,9 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { VideoPlayer } from "@/features/video/components/VideoPlayer";
 import { RelatedVideos } from "@/features/video/components/RelatedVideos";
 import { SubscribeButton } from "@/features/inscricoes/components/SubscribeButton";
+import { VideoReactions } from "@/features/reacoes/components/VideoReactions";
 import { CommentForm } from "@/features/comentarios/components/CommentForm";
 import { CommentList } from "@/features/comentarios/components/CommentList";
 import { getVideoDetail, getRelatedVideos } from "@/features/video/actions/video.actions";
+import { getVideoReactionSummary } from "@/features/reacoes/actions/reaction.actions";
 import { listComments } from "@/features/comentarios/actions/comment.actions";
 import { createClient } from "@/services/supabase/server";
 import { ROUTES } from "@/lib/constants";
@@ -34,15 +36,22 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [related, comments] = await Promise.all([
+  const [related, comments, reactions] = await Promise.all([
     getRelatedVideos(video.id, video.channel.id),
     listComments(video.id),
+    getVideoReactionSummary(video.id),
   ]);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
-        <VideoPlayer src={video.videoUrl} poster={video.thumbnailUrl} title={video.title} />
+        <VideoPlayer
+          videoId={video.id}
+          src={video.videoUrl}
+          poster={video.thumbnailUrl}
+          title={video.title}
+          durationSeconds={video.duration_seconds}
+        />
 
         <div className="space-y-4">
           <h1 className="text-xl font-semibold tracking-tight">{video.title}</h1>
@@ -61,13 +70,20 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               </div>
             </Link>
 
-            <SubscribeButton
-              channelId={video.channel.id}
-              channelSlug={video.channel.slug}
-              initialSubscribed={video.isSubscribed}
-              initialCount={video.subscribersCount}
-              isOwnChannel={user?.id === video.channel.owner_id}
-            />
+            <div className="flex items-center gap-3">
+              <SubscribeButton
+                channelId={video.channel.id}
+                channelSlug={video.channel.slug}
+                initialSubscribed={video.isSubscribed}
+                initialCount={video.subscribersCount}
+                isOwnChannel={user?.id === video.channel.owner_id}
+              />
+              <VideoReactions
+                videoId={video.id}
+                initialLikes={reactions.likesCount}
+                initialReaction={reactions.userReaction}
+              />
+            </div>
           </div>
 
           {video.description && (
@@ -81,7 +97,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
 
-        <div className="space-y-4">
+        <div id="comentarios" className="space-y-4 scroll-mt-20">
           <h2 className="text-sm font-semibold">{comments.length} comentarios</h2>
           {user ? (
             <CommentForm videoId={video.id} />

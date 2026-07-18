@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, Search, Settings, Upload, User as UserIcon } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { signOut } from "@/features/auth/actions/auth.actions";
+import { markAllNotificationsAsRead } from "@/features/notificacoes/actions/notification.actions";
+import { NotificationRow } from "@/features/notificacoes/components/NotificationRow";
 import { useUser } from "@/hooks/use-user";
 import { useNotifications } from "@/hooks/use-notifications";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import type { CurrentUser } from "@/types/user.types";
 
-export function Topbar() {
+export function Topbar({ initialUser }: { initialUser: CurrentUser | null }) {
   const router = useRouter();
-  const { user } = useUser();
-  const { unreadCount } = useNotifications();
+  const { user } = useUser(initialUser);
+  const { notifications, unreadCount } = useNotifications();
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,14 +65,47 @@ export function Topbar() {
 
         <ThemeToggle />
 
-        <Button asChild variant="ghost" size="icon" className="relative" aria-label="Notificacoes">
-          <Link href={ROUTES.notifications}>
-            <Bell />
-            {unreadCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative" aria-label="Notificacoes">
+              <Bell />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 p-0">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <p className="text-sm font-semibold">Notificacoes</p>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  className="focus-ring text-xs font-medium text-primary hover:underline"
+                  onClick={() => markAllNotificationsAsRead()}
+                >
+                  Marcar tudo como lido
+                </button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <p className="px-3 py-8 text-center text-sm text-muted-foreground">Nenhuma notificacao ainda</p>
+            ) : (
+              <ul className="max-h-96 divide-y divide-border overflow-y-auto">
+                {notifications.slice(0, 8).map((notification) => (
+                  <li key={notification.id}>
+                    <NotificationRow notification={notification} compact />
+                  </li>
+                ))}
+              </ul>
             )}
-          </Link>
-        </Button>
+            <Link
+              href={ROUTES.notifications}
+              className="focus-ring block border-t border-border px-3 py-2 text-center text-sm font-medium text-primary hover:bg-secondary"
+            >
+              Ver todas
+            </Link>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {user && (
           <DropdownMenu>
@@ -92,6 +128,28 @@ export function Topbar() {
                   <Settings /> Configuracoes
                 </Link>
               </DropdownMenuItem>
+              {canUpload && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={ROUTES.myChannel}>
+                      <Tv /> Meu canal
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={ROUTES.professor}>
+                      <LayoutDashboard /> Painel do professor
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {user.profile.role === "admin" && (
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.admin}>
+                    <Shield /> Painel admin
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <form action={signOut} className="w-full">
