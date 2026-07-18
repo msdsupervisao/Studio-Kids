@@ -151,12 +151,8 @@ export function Topbar({ initialUser }: { initialUser: CurrentUser | null }) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <form action={signOut} className="w-full">
-                  <button type="submit" className="flex w-full items-center gap-2">
-                    <LogOut /> Sair
-                  </button>
-                </form>
+              <DropdownMenuItem onSelect={() => void signOut()}>
+                <LogOut /> Sair
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
