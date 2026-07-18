@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { LayoutDashboard, Pencil, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SubscribeButton } from "@/features/inscricoes/components/SubscribeButton";
@@ -41,12 +41,23 @@ export function ChannelHeader({
         </div>
 
         {isOwner ? (
-          <Button asChild variant="outline" className="gap-2">
-            <Link href={ROUTES.editMyChannel}>
-              <Pencil className="h-4 w-4" />
-              Editar canal
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="gap-2">
+              <Link href={ROUTES.editMyChannel}>
+                <Pencil className="h-4 w-4" />
+                Personalizar canal
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" className="gap-2">
+              <Link href={ROUTES.professorVideos}>
+                <Video className="h-4 w-4" />
+                Gerir videos
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="icon" aria-label="Abrir painel do professor">
+              <Link href={ROUTES.professor}><LayoutDashboard className="h-4 w-4" /></Link>
+            </Button>
+          </div>
         ) : (
           <SubscribeButton
             channelId={channel.id}

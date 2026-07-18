@@ -6,6 +6,7 @@ import { createStorageService } from "@/services/storage/storage.service";
 import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
 import { slugify } from "@/utils/slug";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
+import { createDraftVideoSchema, updateVideoSchema, videoModerationSchema } from "@/lib/validations";
 import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
 import type { VideoPlaybackData, VideoStatus } from "@/types/video.types";
 
@@ -221,6 +222,9 @@ type CreateDraftVideoInput = Omit<UploadVideoInput, "videoFile" | "thumbnailFile
  * Next.js trunca streams grandes com "Unexpected end of form".
  */
 export async function createDraftVideo(input: CreateDraftVideoInput) {
+  const parsed = createDraftVideoSchema.safeParse(input);
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do video invalidos");
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -230,14 +234,14 @@ export async function createDraftVideo(input: CreateDraftVideoInput) {
   const { data: video, error } = await supabase
     .from("videos")
     .insert({
-      channel_id: input.channelId,
-      category_id: input.categoryId,
-      title: sanitizePlainText(input.title),
-      slug: slugify(input.title),
-      description: input.description ? sanitizeMultilineText(input.description) : null,
+      channel_id: parsed.data.channelId,
+      category_id: parsed.data.categoryId,
+      title: sanitizePlainText(parsed.data.title),
+      slug: slugify(parsed.data.title),
+      description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
       video_path: "",
-      duration_seconds: input.durationSeconds,
-      is_short: input.isShort ?? false,
+      duration_seconds: parsed.data.durationSeconds,
+      is_short: parsed.data.isShort ?? false,
       status: "pending",
     })
     .select("id")
@@ -248,6 +252,9 @@ export async function createDraftVideo(input: CreateDraftVideoInput) {
 }
 
 export async function finalizeVideoUpload(videoId: string, videoPath: string, thumbnailPath: string | null) {
+  if (!/^[0-9a-f-]{36}$/i.test(videoId) || !videoPath || (thumbnailPath !== null && !thumbnailPath)) {
+    throw new Error("Dados de upload invalidos");
+  }
   const supabase = await createClient();
   const { error } = await supabase
     .from("videos")
@@ -259,13 +266,23 @@ export async function finalizeVideoUpload(videoId: string, videoPath: string, th
 }
 
 export async function updateVideoStatus(videoId: string, status: VideoStatus, rejectionReason?: string) {
+  const parsed = videoModerationSchema.safeParse({ videoId, status, rejectionReason });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados de moderacao invalidos");
+
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sessao expirada. Faca login novamente.");
+  const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+  if (roleError || !isAdmin) throw new Error("Apenas administradores podem moderar videos.");
+
   const { error } = await supabase
     .from("videos")
     .update({
-      status,
-      rejection_reason: status === "rejected" ? (rejectionReason ?? null) : null,
-      published_at: status === "published" ? new Date().toISOString() : null,
+      status: parsed.data.status,
+      rejection_reason: parsed.data.status === "rejected" ? (parsed.data.rejectionReason ?? null) : null,
+      published_at: parsed.data.status === "published" ? new Date().toISOString() : null,
     })
     .eq("id", videoId);
 
@@ -329,14 +346,17 @@ export interface UpdateVideoInput {
 }
 
 export async function updateVideo(videoId: string, input: UpdateVideoInput) {
+  const parsed = updateVideoSchema.safeParse(input);
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do video invalidos");
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("videos")
     .update({
-      title: sanitizePlainText(input.title),
-      slug: slugify(input.title),
-      description: input.description ? sanitizeMultilineText(input.description) : null,
-      category_id: input.categoryId,
+      title: sanitizePlainText(parsed.data.title),
+      slug: slugify(parsed.data.title),
+      description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
+      category_id: parsed.data.categoryId,
     })
     .eq("id", videoId);
 

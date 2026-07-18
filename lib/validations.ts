@@ -77,6 +77,27 @@ export const videoUploadSchema = z.object({
 });
 export type VideoUploadInput = z.infer<typeof videoUploadSchema>;
 
+export const createDraftVideoSchema = z.object({
+  channelId: z.string().uuid(),
+  title: z.string().min(3, "Minimo de 3 caracteres").max(150),
+  description: z.string().max(5000),
+  categoryId: z.string().uuid().nullable(),
+  durationSeconds: z.number().int().min(0).max(24 * 60 * 60),
+  isShort: z.boolean().optional(),
+});
+
+export const updateVideoSchema = z.object({
+  title: z.string().min(3, "Minimo de 3 caracteres").max(150),
+  description: z.string().max(5000),
+  categoryId: z.string().uuid().nullable(),
+});
+
+export const videoModerationSchema = z.object({
+  videoId: z.string().uuid(),
+  status: z.enum(["published", "rejected"]),
+  rejectionReason: z.string().max(1000).optional(),
+});
+
 export const commentSchema = z.object({
   videoId: z.string().uuid(),
   parentId: z.string().uuid().optional(),

@@ -7,7 +7,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: [".next/**", "node_modules/**"],
+    // next-env.d.ts e gerado pelo Next e contem a referencia tripla que o
+    // proprio framework exige para as rotas tipadas.
+    ignores: [".next/**", "node_modules/**", "next-env.d.ts"],
   },
 ];
 

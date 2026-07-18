@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { channelSchema } from "@/lib/validations";
-import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES, UPLOAD_LIMITS } from "@/lib/constants";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
 import type { ChannelWithStats } from "@/types/channel.types";
 
@@ -167,10 +167,22 @@ export async function updateChannel(
   let bannerPath: string | undefined;
 
   if (avatarFile instanceof File && avatarFile.size > 0) {
+    if (
+      avatarFile.size > UPLOAD_LIMITS.maxThumbnailSizeBytes ||
+      !(UPLOAD_LIMITS.allowedImageTypes as readonly string[]).includes(avatarFile.type)
+    ) {
+      return { error: "Avatar deve ser uma imagem JPEG, PNG ou WebP de ate 5MB" };
+    }
     avatarPath = `${channelId}/avatar-${Date.now()}.${avatarFile.name.split(".").pop() ?? "jpg"}`;
     await storage.upload(STORAGE_BUCKETS.avatars, avatarPath, avatarFile);
   }
   if (bannerFile instanceof File && bannerFile.size > 0) {
+    if (
+      bannerFile.size > UPLOAD_LIMITS.maxThumbnailSizeBytes ||
+      !(UPLOAD_LIMITS.allowedImageTypes as readonly string[]).includes(bannerFile.type)
+    ) {
+      return { error: "Capa deve ser uma imagem JPEG, PNG ou WebP de ate 5MB" };
+    }
     bannerPath = `${channelId}/banner-${Date.now()}.${bannerFile.name.split(".").pop() ?? "jpg"}`;
     await storage.upload(STORAGE_BUCKETS.banners, bannerPath, bannerFile);
   }

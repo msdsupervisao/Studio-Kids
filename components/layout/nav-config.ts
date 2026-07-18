@@ -1,10 +1,13 @@
 import {
   BarChart3,
   CheckSquare,
+  Clock3,
   FolderCog,
+  Heart,
   Home,
   LayoutGrid,
   LibraryBig,
+  ListVideo,
   Settings,
   Shield,
   Tags,
@@ -12,6 +15,7 @@ import {
   Users,
   Video,
   Zap,
+  Tv,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -26,6 +30,10 @@ export const APP_NAV_ITEMS: NavItem[] = [
   { label: "Shorts", href: ROUTES.shorts, icon: Zap },
   { label: "Explorar", href: ROUTES.explore, icon: LayoutGrid },
   { label: "Biblioteca", href: ROUTES.library, icon: LibraryBig },
+  { label: "Meu canal", href: ROUTES.myChannel, icon: Tv },
+  { label: "Historico", href: ROUTES.history, icon: Clock3 },
+  { label: "Playlists", href: ROUTES.playlists, icon: ListVideo },
+  { label: "Videos curtidos", href: ROUTES.liked, icon: Heart },
 ];
 
 export const PROFESSOR_NAV_ITEMS: NavItem[] = [

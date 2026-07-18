@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LayoutDashboard, LogOut, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Plus, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,12 +55,21 @@ export function Topbar({ initialUser }: { initialUser: CurrentUser | null }) {
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {canUpload && (
-          <Button asChild variant="outline" size="sm" className="hidden gap-2 sm:inline-flex">
-            <Link href={ROUTES.upload}>
-              <Upload className="h-4 w-4" />
-              Enviar
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="sm" className="hidden gap-2 rounded-full sm:inline-flex">
+                <Plus className="h-4 w-4" /> Criar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={ROUTES.upload}><Upload /> Enviar video ou Short</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={ROUTES.newPlaylist}><Tv /> Criar playlist</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         <ThemeToggle />

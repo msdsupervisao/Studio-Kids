@@ -21,6 +21,8 @@
 export type UserRole = "student" | "professor" | "admin";
 export type VideoStatus = "draft" | "pending" | "published" | "rejected";
 export type VideoReactionType = "like" | "dislike";
+export type ChannelPostKind = "text" | "poll" | "quiz" | "image" | "image_poll" | "video";
+export type ChannelPostStatus = "published" | "scheduled" | "archived";
 
 type ProfilesRow = {
   id: string;
@@ -127,6 +129,29 @@ type VideoReactionsRow = {
   user_id: string;
   video_id: string;
   reaction: VideoReactionType;
+  created_at: string;
+};
+
+type ChannelPostsRow = {
+  id: string;
+  channel_id: string;
+  author_id: string;
+  kind: ChannelPostKind;
+  content: string;
+  options: string[];
+  image_path: string | null;
+  option_images: (string | null)[];
+  video_id: string | null;
+  status: ChannelPostStatus;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type ChannelPostVotesRow = {
+  post_id: string;
+  user_id: string;
+  option_index: number;
   created_at: string;
 };
 
@@ -324,6 +349,55 @@ export interface Database {
             columns: ["video_id"];
             isOneToOne: false;
             referencedRelation: "videos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      channel_posts: {
+        Row: ChannelPostsRow;
+        Insert: Partial<ChannelPostsRow> & { channel_id: string; author_id: string };
+        Update: Partial<ChannelPostsRow>;
+        Relationships: [
+          {
+            foreignKeyName: "channel_posts_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "channel_posts_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "channel_posts_video_id_fkey";
+            columns: ["video_id"];
+            isOneToOne: false;
+            referencedRelation: "videos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      channel_post_votes: {
+        Row: ChannelPostVotesRow;
+        Insert: Partial<ChannelPostVotesRow> & { post_id: string; user_id: string; option_index: number };
+        Update: Partial<ChannelPostVotesRow>;
+        Relationships: [
+          {
+            foreignKeyName: "channel_post_votes_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "channel_posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "channel_post_votes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];

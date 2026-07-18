@@ -59,4 +59,5 @@ export const STORAGE_BUCKETS = {
   thumbnails: "thumbnails",
   avatars: "avatars",
   banners: "banners",
+  postImages: "post-images",
 } as const;

@@ -18,15 +18,19 @@ const envSchema = z.object({
 });
 
 function loadEnv() {
+  // Arquivos .env costumam conter chaves opcionais como `OPENAI_API_KEY=`.
+  // Zod considera string vazia diferente de undefined; normalizar aqui
+  // permite desativar provedores sem quebrar o build.
+  const optionalValue = (value: string | undefined) => value?.trim() || undefined;
   const parsed = envSchema.safeParse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: optionalValue(process.env.SUPABASE_SERVICE_ROLE_KEY),
     AI_PROVIDER: process.env.AI_PROVIDER,
-    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    ANTHROPIC_API_KEY: optionalValue(process.env.ANTHROPIC_API_KEY),
+    GEMINI_API_KEY: optionalValue(process.env.GEMINI_API_KEY),
+    OPENAI_API_KEY: optionalValue(process.env.OPENAI_API_KEY),
+    OPENROUTER_API_KEY: optionalValue(process.env.OPENROUTER_API_KEY),
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   });
 

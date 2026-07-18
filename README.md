@@ -22,6 +22,12 @@ Documentacao completa em [`docs/`](docs):
    - `supabase/migrations/0001_schema.sql`
    - `supabase/policies/rls.sql`
    - `supabase/storage.sql`
+   - `supabase/migrations/0002_video_reactions.sql`
+   - `supabase/migrations/0003_shorts.sql`
+   - `supabase/migrations/0004_fix_channel_avatar_storage.sql`
+   - `supabase/migrations/0005_security_hardening.sql`
+   - `supabase/migrations/0006_channel_community.sql`
+   - `supabase/migrations/0007_channel_post_media.sql`
    - `supabase/seed.sql`
 3. Em **Project Settings > API**, copie a `Project URL`, a `anon public key` e a `service_role key`.
 
