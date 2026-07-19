@@ -25,7 +25,7 @@ export default async function HomePage({
   ]);
 
   return (
-    <div className="relative space-y-8">
+    <div className="relative isolate space-y-8">
       <PlayfulBackground />
       <CategoryFilterBar categories={categories} activeSlug={categoria} basePath={ROUTES.home} />
 
