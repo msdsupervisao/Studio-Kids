@@ -7,7 +7,6 @@ import { VideoCard } from "@/components/shared/VideoCard";
 import { ShortCard } from "@/components/shared/ShortCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CategoryFilterBar } from "@/components/shared/CategoryFilterBar";
-import { PlayfulBackground } from "@/components/shared/PlayfulBackground";
 import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -25,8 +24,7 @@ export default async function HomePage({
   ]);
 
   return (
-    <div className="relative isolate space-y-8">
-      <PlayfulBackground />
+    <div className="space-y-8">
       <CategoryFilterBar categories={categories} activeSlug={categoria} basePath={ROUTES.home} />
 
       {shorts.length > 0 && (

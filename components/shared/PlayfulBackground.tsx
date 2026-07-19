@@ -1,32 +1,53 @@
-import { Sparkles, Star, Heart } from "lucide-react";
+const PARTICLE_COLORS = ["#d946ef", "#8b5cf6", "#06b6d4", "#6366f1"];
+const PARTICLE_COUNT = 40;
 
-const SPARKLES = [
-  { Icon: Sparkles, top: "2%", left: "10%", size: 20, delay: "0s", spin: true, color: "text-primary/70" },
-  { Icon: Star, top: "6%", left: "45%", size: 14, delay: "0.6s", spin: false, color: "text-accent/80" },
-  { Icon: Heart, top: "1%", left: "78%", size: 16, delay: "1.2s", spin: false, color: "text-destructive/60" },
-  { Icon: Star, top: "30%", left: "92%", size: 14, delay: "1.8s", spin: false, color: "text-success/70" },
-  { Icon: Sparkles, top: "45%", left: "3%", size: 18, delay: "0.9s", spin: true, color: "text-primary/60" },
-  { Icon: Heart, top: "70%", left: "94%", size: 16, delay: "2.4s", spin: false, color: "text-accent/70" },
-  { Icon: Star, top: "85%", left: "8%", size: 14, delay: "0.3s", spin: false, color: "text-success/60" },
-];
+/** PRNG determinístico (mesma sequência sempre) — evita mismatch de hidratação entre servidor e cliente. */
+function mulberry32(seed: number) {
+  return function random() {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const random = mulberry32(42);
+const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
+  const size = 2 + random() * 4;
+  return {
+    left: random() * 100,
+    top: random() * 100,
+    size,
+    opacity: 0.3 + random() * 0.6,
+    duration: 6 + random() * 10,
+    delay: -random() * 12,
+    color: PARTICLE_COLORS[i % PARTICLE_COLORS.length],
+  };
+});
 
 /**
- * Fundo decorativo animado — absolute/atras de tudo (-z-10, pointer-events-none),
- * nao ocupa espaco no layout nem desloca nenhum outro elemento da pagina.
+ * Fundo decorativo com particulas flutuando — absolute/atras de tudo
+ * (-z-10, pointer-events-none), nao ocupa espaco no layout.
  */
 export function PlayfulBackground() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="animate-float-a absolute -top-20 -left-20 h-80 w-80 rounded-full bg-primary/25 blur-3xl" />
-      <div className="animate-float-b absolute top-[-4rem] right-[-5rem] h-96 w-96 rounded-full bg-accent/25 blur-3xl" />
-      <div className="animate-float-c absolute top-1/3 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-success/20 blur-3xl" />
-      <div className="animate-float-b absolute bottom-[-6rem] left-[-4rem] h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
-      <div className="animate-float-a absolute right-[-3rem] bottom-10 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
-
-      {SPARKLES.map(({ Icon, top, left, size, delay, spin, color }, i) => (
-        <div key={i} className={`animate-twinkle absolute ${color}`} style={{ top, left, animationDelay: delay }}>
-          <Icon className={spin ? "animate-spin-slow" : ""} style={{ width: size, height: size }} strokeWidth={2.5} />
-        </div>
+      {particles.map((p, i) => (
+        <span
+          key={i}
+          className="animate-particle-float absolute rounded-full"
+          style={{
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            width: p.size,
+            height: p.size,
+            opacity: p.opacity,
+            backgroundColor: p.color,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+          }}
+        />
       ))}
     </div>
   );

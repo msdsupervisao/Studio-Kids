@@ -52,11 +52,7 @@
 
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-slide-up: slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-float-a: float-a 9s ease-in-out infinite;
-  --animate-float-b: float-b 11s ease-in-out infinite;
-  --animate-float-c: float-c 13s ease-in-out infinite;
-  --animate-twinkle: twinkle 3.5s ease-in-out infinite;
-  --animate-spin-slow: spin 14s linear infinite;
+  --animate-particle-float: particle-float ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -76,42 +72,13 @@
       transform: translateY(0);
     }
   }
-  @keyframes float-a {
+  @keyframes particle-float {
     0%,
     100% {
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0);
     }
     50% {
-      transform: translate(3%, -6%) scale(1.06);
-    }
-  }
-  @keyframes float-b {
-    0%,
-    100% {
-      transform: translate(0, 0) scale(1);
-    }
-    50% {
-      transform: translate(-4%, 5%) scale(1.08);
-    }
-  }
-  @keyframes float-c {
-    0%,
-    100% {
-      transform: translate(0, 0) scale(1);
-    }
-    50% {
-      transform: translate(4%, 4%) scale(1.05);
-    }
-  }
-  @keyframes twinkle {
-    0%,
-    100% {
-      opacity: 0.25;
-      transform: scale(0.85);
-    }
-    50% {
-      opacity: 0.9;
-      transform: scale(1.15);
+      transform: translate(8px, -22px);
     }
   }
 }
