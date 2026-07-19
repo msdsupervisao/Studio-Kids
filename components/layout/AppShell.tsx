@@ -16,7 +16,7 @@ export async function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <Topbar initialUser={initialUser} />
+      <Topbar initialUser={initialUser} wallpaper={navVariant === "app"} />
       <div className="flex flex-col md:flex-row">
         <Sidebar variant={navVariant} title={navTitle} />
         <main className="relative isolate min-w-0 flex-1 px-4 py-6 md:px-8">

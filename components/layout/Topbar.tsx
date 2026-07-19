@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, LayoutDashboard, LogOut, Plus, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
@@ -21,9 +22,16 @@ import { NotificationRow } from "@/features/notificacoes/components/Notification
 import { useUser } from "@/hooks/use-user";
 import { useNotifications } from "@/hooks/use-notifications";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/types/user.types";
 
-export function Topbar({ initialUser }: { initialUser: CurrentUser | null }) {
+export function Topbar({
+  initialUser,
+  wallpaper = false,
+}: {
+  initialUser: CurrentUser | null;
+  wallpaper?: boolean;
+}) {
   const router = useRouter();
   const { user } = useUser(initialUser);
   const { notifications, unreadCount } = useNotifications();
@@ -38,7 +46,25 @@ export function Topbar({ initialUser }: { initialUser: CurrentUser | null }) {
   const canUpload = user?.profile.role === "professor" || user?.profile.role === "admin";
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header
+      className={cn(
+        "sticky top-0 z-40 isolate flex h-16 items-center gap-4 overflow-hidden border-b border-border px-4",
+        !wallpaper && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      )}
+    >
+      {wallpaper && (
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <Image
+            src="/images/theme/topbar-lab.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_48%]"
+          />
+          <div className="absolute inset-0 bg-background/55 backdrop-blur-[1px]" />
+        </div>
+      )}
       <Link href={ROUTES.home} className="flex shrink-0 items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
           E

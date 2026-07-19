@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,11 +24,28 @@ export function Sidebar({ variant, title }: { variant: SidebarVariant; title?: s
   const pathname = usePathname();
   const items = ITEMS_BY_VARIANT[variant];
 
+  const wallpaper = variant === "app";
+
   return (
     <nav
       aria-label={title ?? "Navegacao"}
-      className="flex gap-1 overflow-x-auto border-b border-sidebar-border bg-sidebar p-2 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-60 md:shrink-0 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-4"
+      className={cn(
+        "relative isolate flex gap-1 overflow-x-auto overflow-y-hidden border-b border-sidebar-border p-2 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-60 md:shrink-0 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-4",
+        !wallpaper && "bg-sidebar"
+      )}
     >
+      {wallpaper && (
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <Image
+            src="/images/theme/sidebar-robotica.jpeg"
+            alt=""
+            fill
+            sizes="240px"
+            className="object-cover object-[center_20%]"
+          />
+          <div className="absolute inset-0 bg-sidebar/50 backdrop-blur-[1px]" />
+        </div>
+      )}
       {title && (
         <p className="hidden px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:block">
           {title}
