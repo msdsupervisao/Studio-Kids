@@ -10,8 +10,23 @@ import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
 
+// Deixa o que a pessoa digitar sempre valido como nome de usuario, em vez
+// de barrar com erro — remove acentos, espaco vira underline, maiuscula
+// vira minuscula, qualquer outro caractere e descartado.
+const COMBINING_DIACRITICS = new RegExp("[̀-ͯ]", "g");
+
+function sanitizeUsername(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(COMBINING_DIACRITICS, "")
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_.]/g, "");
+}
+
 export function LoginForm() {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [signupUsername, setSignupUsername] = useState("");
   const [loginState, loginAction, loginPending] = useActionState(signIn, initialState);
   const [signupState, signupAction, signupPending] = useActionState(signUp, initialState);
 
@@ -72,7 +87,18 @@ export function LoginForm() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="username">Nome de usuario</Label>
-            <Input id="username" name="username" placeholder="seu_usuario" required autoComplete="username" />
+            <Input
+              id="username"
+              name="username"
+              placeholder="seu_usuario"
+              required
+              autoComplete="username"
+              value={signupUsername}
+              onChange={(event) => setSignupUsername(sanitizeUsername(event.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              Sem espacos, acentos ou maiusculas — ajustamos automaticamente.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="signup-password">Senha</Label>
