@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { createClient } from "@/services/supabase/client";
 import { createStorageService } from "@/services/storage/storage.service";
 import { createDraftVideo, finalizeVideoUpload, type UploadVideoInput } from "@/features/video/actions/video.actions";
+import { compressVideo } from "@/features/video/utils/compress-video";
 import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
 
-export type UploadPhase = "idle" | "sending" | "success" | "error";
+export type UploadPhase = "idle" | "compressing" | "sending" | "success" | "error";
 
 /**
  * O arquivo de video (ate 2GB) e enviado direto do navegador para o
@@ -19,12 +20,19 @@ export type UploadPhase = "idle" | "sending" | "success" | "error";
 export function useUpload() {
   const router = useRouter();
   const [phase, setPhase] = useState<UploadPhase>("idle");
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(input: UploadVideoInput) {
-    setPhase("sending");
+    setPhase("compressing");
+    setProgress(0);
     setError(null);
     try {
+      const compressedVideoFile = await compressVideo(input.videoFile, input.durationSeconds, (ratio) =>
+        setProgress(Math.round(ratio * 100))
+      );
+
+      setPhase("sending");
       // Objeto novo, so com campos de texto — nao repassar `input` inteiro,
       // que ainda carrega os File como propriedades e faria o Next.js
       // voltar a serializar tudo como multipart (o mesmo bug do upload
@@ -41,9 +49,9 @@ export function useUpload() {
       const supabase = createClient();
       const storage = createStorageService(supabase);
 
-      const videoExtension = input.videoFile.name.split(".").pop() ?? "mp4";
+      const videoExtension = compressedVideoFile.name.split(".").pop() ?? "mp4";
       const videoPath = `${input.channelId}/${videoId}.${videoExtension}`;
-      await storage.upload(STORAGE_BUCKETS.videos, videoPath, input.videoFile);
+      await storage.upload(STORAGE_BUCKETS.videos, videoPath, compressedVideoFile);
 
       let thumbnailPath: string | null = null;
       if (input.thumbnailFile) {
@@ -67,5 +75,5 @@ export function useUpload() {
     }
   }
 
-  return { phase, error, submit, isSubmitting: phase === "sending" };
+  return { phase, progress, error, submit, isSubmitting: phase === "compressing" || phase === "sending" };
 }

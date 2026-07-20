@@ -32,6 +32,29 @@ export async function listMyPlaylists(): Promise<PlaylistWithVideos[]> {
   }));
 }
 
+export async function listChannelPlaylists(
+  ownerId: string,
+  includePrivate: boolean
+): Promise<PlaylistWithVideos[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("playlists")
+    .select("*, playlist_videos ( video_id )")
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: false });
+
+  if (!includePrivate) query = query.eq("is_public", true);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Falha ao carregar playlists: ${error.message}`);
+
+  return (data ?? []).map((playlist) => ({
+    ...playlist,
+    videos: [] as VideoCardData[],
+    videosCount: playlist.playlist_videos?.length ?? 0,
+  }));
+}
+
 export async function searchPlaylists(query: string): Promise<PlaylistWithVideos[]> {
   if (!query.trim()) return [];
   const supabase = await createClient();
@@ -85,6 +108,34 @@ export async function createPlaylist(
 
   revalidatePath(ROUTES.playlists);
   redirect(ROUTES.playlists);
+}
+
+export interface PlaylistMembership {
+  id: string;
+  title: string;
+  containsVideo: boolean;
+}
+
+export async function listMyPlaylistsForVideo(videoId: string): Promise<PlaylistMembership[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("id, title, playlist_videos ( video_id )")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Falha ao carregar playlists: ${error.message}`);
+
+  return (data ?? []).map((playlist) => ({
+    id: playlist.id,
+    title: playlist.title,
+    containsVideo: (playlist.playlist_videos ?? []).some((entry) => entry.video_id === videoId),
+  }));
 }
 
 export async function addVideoToPlaylist(playlistId: string, videoId: string) {

@@ -14,7 +14,7 @@ export function CategoryFilterBar({
   basePath: string;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="sticky top-16 z-30 -mx-4 flex gap-2 overflow-x-auto bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:-mx-8 md:px-8">
       <Link
         href={basePath}
         className={cn(

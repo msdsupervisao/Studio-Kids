@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { updatePassword, type PasswordActionState } from "./actions";
 
@@ -20,16 +20,15 @@ export function ChangePasswordForm() {
     <form ref={formRef} action={action} className="max-w-md space-y-5">
       <div className="space-y-1.5">
         <Label htmlFor="password">Nova senha</Label>
-        <Input id="password" name="password" type="password" required autoComplete="new-password" minLength={8} />
+        <PasswordInput id="password" name="password" required autoComplete="new-password" minLength={8} />
         <p className="text-xs text-muted-foreground">Minimo 8 caracteres, 1 maiuscula e 1 numero.</p>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           required
           autoComplete="new-password"
           minLength={8}

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LayoutDashboard, LogOut, Plus, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { Bell, LayoutDashboard, LogOut, Menu, Plus, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { VoiceSearchButton } from "@/components/shared/VoiceSearchButton";
+import { useSidebar } from "@/components/layout/SidebarProvider";
 import { signOut } from "@/features/auth/actions/auth.actions";
 import { markAllNotificationsAsRead } from "@/features/notificacoes/actions/notification.actions";
 import { NotificationRow } from "@/features/notificacoes/components/NotificationRow";
@@ -35,12 +38,22 @@ export function Topbar({
   const router = useRouter();
   const { user } = useUser(initialUser);
   const { notifications, unreadCount } = useNotifications();
+  const { toggle: toggleSidebar } = useSidebar();
+  const [query, setQuery] = useState("");
+
+  function runSearch(value: string) {
+    const trimmed = value.trim();
+    if (trimmed) router.push(`${ROUTES.search}?q=${encodeURIComponent(trimmed)}`);
+  }
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const query = String(formData.get("q") ?? "").trim();
-    if (query) router.push(`${ROUTES.search}?q=${encodeURIComponent(query)}`);
+    runSearch(query);
+  }
+
+  function handleVoiceResult(transcript: string) {
+    setQuery(transcript);
+    runSearch(transcript);
   }
 
   const canUpload = user?.profile.role === "professor" || user?.profile.role === "admin";
@@ -65,6 +78,16 @@ export function Topbar({
           <div className="absolute inset-0 bg-background/55 backdrop-blur-[1px]" />
         </div>
       )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden shrink-0 md:inline-flex"
+        onClick={toggleSidebar}
+        aria-label="Abrir/recolher menu"
+      >
+        <Menu />
+      </Button>
+
       <Link href={ROUTES.home} className="flex shrink-0 items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
           E
@@ -72,11 +95,25 @@ export function Topbar({
         <span className="hidden text-base font-semibold tracking-tight sm:inline">{APP_NAME}</span>
       </Link>
 
-      <form onSubmit={handleSearch} className="mx-auto w-full max-w-xl">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input name="q" placeholder="Pesquisar aulas, canais..." className="pl-9" aria-label="Pesquisar" />
+      <form onSubmit={handleSearch} className="mx-auto flex w-full max-w-xl items-center">
+        <div className="flex w-full">
+          <Input
+            name="q"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Pesquisar aulas, canais..."
+            aria-label="Pesquisar"
+            className="rounded-l-full rounded-r-none border-r-0 focus-visible:z-10"
+          />
+          <button
+            type="submit"
+            aria-label="Pesquisar"
+            className="focus-ring flex w-14 shrink-0 items-center justify-center rounded-r-full border border-l-0 border-input bg-secondary text-muted-foreground transition-colors hover:bg-muted"
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
+        <VoiceSearchButton onResult={handleVoiceResult} />
       </form>
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -105,7 +142,9 @@ export function Topbar({
             <Button variant="ghost" size="icon" className="relative" aria-label="Notificacoes">
               <Bell />
               {unreadCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
               )}
             </Button>
           </DropdownMenuTrigger>

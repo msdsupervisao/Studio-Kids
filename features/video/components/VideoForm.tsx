@@ -26,7 +26,7 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [duration, setDuration] = useState(0);
   const [isShort, setIsShort] = useState(false);
-  const { submit, isSubmitting } = useUpload();
+  const { submit, phase, progress, isSubmitting } = useUpload();
 
   const shortTooLong = isShort && duration > SHORT_MAX_SECONDS;
 
@@ -161,10 +161,18 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
       </div>
 
       <Button type="submit" disabled={!videoFile || !channelId || isSubmitting || shortTooLong} className="w-full">
-        {isSubmitting ? "Enviando..." : isShort ? "Enviar Short para analise" : "Enviar para analise"}
+        {phase === "compressing"
+          ? `Comprimindo video... ${progress}%`
+          : phase === "sending"
+            ? "Enviando..."
+            : isShort
+              ? "Enviar Short para analise"
+              : "Enviar para analise"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Seu video ficara visivel apos a aprovacao da nossa equipe.
+        {phase === "compressing"
+          ? "Reduzindo o tamanho do video no seu navegador antes do envio — isso pode levar alguns minutos."
+          : "Seu video ficara visivel apos a aprovacao da nossa equipe."}
       </p>
     </form>
   );

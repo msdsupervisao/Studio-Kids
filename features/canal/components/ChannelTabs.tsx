@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Film, Zap } from "lucide-react";
 import { formatRelativeDate } from "@/utils/format";
 import { ChannelCommunity } from "@/features/canal/components/ChannelCommunity";
+import { PlaylistGrid } from "@/features/playlist/components/PlaylistGrid";
 import type { ChannelPost } from "@/features/canal/actions/channel-post.actions";
+import type { PlaylistWithVideos } from "@/types/playlist.types";
 import type { VideoCardData, VideoStatus } from "@/types/video.types";
 
 type ChannelVideo = VideoCardData & { status: VideoStatus; isShort: boolean };
@@ -26,6 +28,7 @@ export function ChannelTabs({
   createdAt,
   showStatus,
   posts,
+  playlists,
   isOwner,
 }: {
   videos: ChannelVideo[];
@@ -33,6 +36,7 @@ export function ChannelTabs({
   createdAt: string;
   showStatus: boolean;
   posts: ChannelPost[];
+  playlists: PlaylistWithVideos[];
   isOwner: boolean;
 }) {
   const regularVideos = videos.filter((video) => !video.isShort);
@@ -49,6 +53,7 @@ export function ChannelTabs({
         {showStatus && <TabsTrigger value="em-analise">Em analise</TabsTrigger>}
         {showStatus && rejectedVideos.length > 0 && <TabsTrigger value="rejeitados">Rejeitados</TabsTrigger>}
         {(shorts.length > 0 || showStatus) && <TabsTrigger value="shorts">Shorts</TabsTrigger>}
+        <TabsTrigger value="playlists">Playlists</TabsTrigger>
         <TabsTrigger value="comunidade">Comunidade</TabsTrigger>
         <TabsTrigger value="sobre">Sobre</TabsTrigger>
       </TabsList>
@@ -88,6 +93,13 @@ export function ChannelTabs({
             ))}
           </div>
         )}
+      </TabsContent>
+
+      <TabsContent value="playlists">
+        <PlaylistGrid
+          playlists={playlists}
+          emptyTitle={isOwner ? "Voce ainda nao criou nenhuma playlist" : "Nenhuma playlist publica ainda"}
+        />
       </TabsContent>
 
       <TabsContent value="comunidade">

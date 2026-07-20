@@ -3,7 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { VideoPlayer } from "@/features/video/components/VideoPlayer";
+import { VideoDescription } from "@/features/video/components/VideoDescription";
 import { RelatedVideos } from "@/features/video/components/RelatedVideos";
+import { WatchLayout } from "@/features/video/components/WatchLayout";
+import { ShareButton } from "@/features/video/components/ShareButton";
+import { SaveButton } from "@/features/video/components/SaveButton";
 import { SubscribeButton } from "@/features/inscricoes/components/SubscribeButton";
 import { VideoReactions } from "@/features/reacoes/components/VideoReactions";
 import { CommentForm } from "@/features/comentarios/components/CommentForm";
@@ -11,9 +15,10 @@ import { CommentList } from "@/features/comentarios/components/CommentList";
 import { getVideoDetail, getRelatedVideos } from "@/features/video/actions/video.actions";
 import { getVideoReactionSummary } from "@/features/reacoes/actions/reaction.actions";
 import { listComments } from "@/features/comentarios/actions/comment.actions";
+import { listMyPlaylistsForVideo } from "@/features/playlist/actions/playlist.actions";
 import { createClient } from "@/services/supabase/server";
 import { ROUTES } from "@/lib/constants";
-import { formatCompactNumber, formatRelativeDate } from "@/utils/format";
+import { formatCompactNumber } from "@/utils/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -36,15 +41,16 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [related, comments, reactions] = await Promise.all([
+  const [related, comments, reactions, playlists] = await Promise.all([
     getRelatedVideos(video.id, video.channel.id),
     listComments(video.id),
     getVideoReactionSummary(video.id),
+    listMyPlaylistsForVideo(video.id),
   ]);
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
+    <WatchLayout
+      player={
         <VideoPlayer
           videoId={video.id}
           src={video.videoUrl}
@@ -52,71 +58,75 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
           title={video.title}
           durationSeconds={video.duration_seconds}
         />
+      }
+      details={
+        <>
+          <div className="space-y-4">
+            <h1 className="text-xl font-semibold tracking-tight">{video.title}</h1>
 
-        <div className="space-y-4">
-          <h1 className="text-xl font-semibold tracking-tight">{video.title}</h1>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <Link href={ROUTES.channel(video.channel.slug)} className="focus-ring flex items-center gap-3">
+                <Avatar className="h-11 w-11">
+                  <AvatarImage src={video.channel.avatar_url ?? undefined} alt={video.channel.name} />
+                  <AvatarFallback>{video.channel.name.slice(0, 1).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{video.channel.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatCompactNumber(video.subscribersCount)} inscritos
+                  </p>
+                </div>
+              </Link>
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link href={ROUTES.channel(video.channel.slug)} className="focus-ring flex items-center gap-3">
-              <Avatar className="h-11 w-11">
-                <AvatarImage src={video.channel.avatar_url ?? undefined} alt={video.channel.name} />
-                <AvatarFallback>{video.channel.name.slice(0, 1).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium">{video.channel.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatCompactNumber(video.subscribersCount)} inscritos
-                </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <SubscribeButton
+                  channelId={video.channel.id}
+                  channelSlug={video.channel.slug}
+                  initialSubscribed={video.isSubscribed}
+                  initialCount={video.subscribersCount}
+                  isOwnChannel={user?.id === video.channel.owner_id}
+                />
+                <VideoReactions
+                  videoId={video.id}
+                  initialLikes={reactions.likesCount}
+                  initialReaction={reactions.userReaction}
+                />
+                <ShareButton videoId={video.id} />
+                <SaveButton videoId={video.id} isLoggedIn={Boolean(user)} initialPlaylists={playlists} />
               </div>
-            </Link>
-
-            <div className="flex items-center gap-3">
-              <SubscribeButton
-                channelId={video.channel.id}
-                channelSlug={video.channel.slug}
-                initialSubscribed={video.isSubscribed}
-                initialCount={video.subscribersCount}
-                isOwnChannel={user?.id === video.channel.owner_id}
-              />
-              <VideoReactions
-                videoId={video.id}
-                initialLikes={reactions.likesCount}
-                initialReaction={reactions.userReaction}
-              />
             </div>
+
+            {video.description && (
+              <VideoDescription
+                description={video.description}
+                viewsCount={video.views_count}
+                publishedAt={video.published_at}
+              />
+            )}
           </div>
 
-          {video.description && (
-            <div className="rounded-xl bg-secondary p-4 text-sm text-secondary-foreground">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
-                {formatCompactNumber(video.views_count)} visualizacoes ·{" "}
-                {video.published_at && formatRelativeDate(video.published_at)}
+          <div id="comentarios" className="space-y-4 scroll-mt-20">
+            <h2 className="text-sm font-semibold">{comments.length} comentarios</h2>
+            {user ? (
+              <CommentForm videoId={video.id} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                <Link href={ROUTES.login} className="text-primary hover:underline">
+                  Entre
+                </Link>{" "}
+                para comentar.
               </p>
-              <p className="whitespace-pre-wrap">{video.description}</p>
-            </div>
-          )}
-        </div>
-
-        <div id="comentarios" className="space-y-4 scroll-mt-20">
-          <h2 className="text-sm font-semibold">{comments.length} comentarios</h2>
-          {user ? (
-            <CommentForm videoId={video.id} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              <Link href={ROUTES.login} className="text-primary hover:underline">
-                Entre
-              </Link>{" "}
-              para comentar.
-            </p>
-          )}
-          <CommentList videoId={video.id} comments={comments} currentUserId={user?.id} />
-        </div>
-      </div>
-
-      <aside>
-        <h2 className="mb-3 text-sm font-semibold">Mais desse canal</h2>
-        <RelatedVideos videos={related} />
-      </aside>
-    </div>
+            )}
+            <CommentList videoId={video.id} comments={comments} currentUserId={user?.id} />
+          </div>
+        </>
+      }
+      related={
+        <>
+          <h2 className="mb-3 text-sm font-semibold">Mais desse canal</h2>
+          <RelatedVideos videos={related} />
+        </>
+      }
+    />
   );
 }

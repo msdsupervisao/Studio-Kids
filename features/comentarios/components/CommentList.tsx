@@ -1,12 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CommentForm } from "@/features/comentarios/components/CommentForm";
 import { deleteComment } from "@/features/comentarios/actions/comment.actions";
 import { formatRelativeDate } from "@/utils/format";
+import { cn } from "@/lib/utils";
 import type { CommentWithAuthor } from "@/types/comment.types";
+
+type SortMode = "relevantes" | "recentes";
+
+const SORT_LABEL: Record<SortMode, string> = {
+  relevantes: "Mais relevantes",
+  recentes: "Mais recentes",
+};
+
+// "Relevancia" e aproximada pelo volume de respostas, ja que os
+// comentarios nao tem contagem de curtidas. E uma heuristica simples,
+// nao um algoritmo de ranking real.
+function sortComments(comments: CommentWithAuthor[], mode: SortMode): CommentWithAuthor[] {
+  if (mode === "recentes") {
+    return [...comments].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+  return [...comments].sort((a, b) => {
+    const diff = (b.replies?.length ?? 0) - (a.replies?.length ?? 0);
+    return diff !== 0 ? diff : b.created_at.localeCompare(a.created_at);
+  });
+}
 
 export function CommentList({
   videoId,
@@ -17,9 +44,36 @@ export function CommentList({
   comments: CommentWithAuthor[];
   currentUserId?: string;
 }) {
+  const [sortMode, setSortMode] = useState<SortMode>("relevantes");
+  const sorted = useMemo(() => sortComments(comments, sortMode), [comments, sortMode]);
+
+  if (comments.length === 0) return null;
+
   return (
     <div className="space-y-6">
-      {comments.map((comment) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="focus-ring flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary"
+          >
+            Ordenar por: {SORT_LABEL[sortMode]}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {(Object.keys(SORT_LABEL) as SortMode[]).map((mode) => (
+            <DropdownMenuItem
+              key={mode}
+              onSelect={() => setSortMode(mode)}
+              className={cn(mode === sortMode && "font-semibold text-primary")}
+            >
+              {SORT_LABEL[mode]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {sorted.map((comment) => (
         <CommentItem key={comment.id} videoId={videoId} comment={comment} currentUserId={currentUserId} />
       ))}
     </div>

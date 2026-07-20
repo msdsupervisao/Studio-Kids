@@ -3,9 +3,15 @@ import { PlaylistCard } from "@/components/shared/PlaylistCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { PlaylistWithVideos } from "@/types/playlist.types";
 
-export function PlaylistGrid({ playlists }: { playlists: PlaylistWithVideos[] }) {
+export function PlaylistGrid({
+  playlists,
+  emptyTitle = "Voce ainda nao criou nenhuma playlist",
+}: {
+  playlists: PlaylistWithVideos[];
+  emptyTitle?: string;
+}) {
   if (playlists.length === 0) {
-    return <EmptyState icon={ListVideo} title="Voce ainda nao criou nenhuma playlist" />;
+    return <EmptyState icon={ListVideo} title={emptyTitle} />;
   }
 
   return (

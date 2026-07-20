@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn, signUp, type AuthActionState } from "@/features/auth/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -57,7 +58,7 @@ export function LoginForm() {
                 Esqueceu a senha?
               </Link>
             </div>
-            <Input id="password" name="password" type="password" required autoComplete="current-password" />
+            <PasswordInput id="password" name="password" required autoComplete="current-password" />
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <Button type="submit" className="w-full" disabled={pending}>
@@ -87,10 +88,9 @@ export function LoginForm() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="signup-password">Senha</Label>
-            <Input
+            <PasswordInput
               id="signup-password"
               name="password"
-              type="password"
               required
               autoComplete="new-password"
               minLength={8}
