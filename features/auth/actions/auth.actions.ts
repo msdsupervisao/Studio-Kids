@@ -7,6 +7,15 @@ import { loginSchema, signupSchema, forgotPasswordSchema } from "@/lib/validatio
 import { ROUTES } from "@/lib/constants";
 import type { CurrentUser } from "@/types/user.types";
 
+// Contas sao por nome de usuario, nao e-mail. O Supabase Auth exige um
+// e-mail internamente, entao geramos um a partir do username — nunca
+// exibido nem usado para enviar mensagens. Como "username" e unico e
+// validado (letras minusculas, numeros, ponto, underline), o e-mail
+// derivado tambem e unico.
+function usernameToAuthEmail(username: string): string {
+  return `${username}@contas.studiokids.internal`;
+}
+
 /** Usuario autenticado + profile, verificado no servidor (seguro para hidratar componentes client). */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = await createClient();
@@ -28,17 +37,24 @@ export interface AuthActionState {
 
 export async function signIn(_prevState: AuthActionState, formData: FormData): Promise<AuthActionState> {
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    identifier: formData.get("identifier"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
   }
 
+  // "@" no campo => conta antiga, criada com e-mail real, antes da
+  // migracao para login por usuario. Sem "@" => nome de usuario, do qual
+  // derivamos o e-mail interno gerado no cadastro.
+  const email = parsed.data.identifier.includes("@")
+    ? parsed.data.identifier
+    : usernameToAuthEmail(parsed.data.identifier);
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({ email, password: parsed.data.password });
   if (error) {
-    return { error: "E-mail ou senha incorretos" };
+    return { error: "Usuario ou senha incorretos" };
   }
 
   redirect(ROUTES.home);
@@ -48,7 +64,6 @@ export async function signUp(_prevState: AuthActionState, formData: FormData): P
   const parsed = signupSchema.safeParse({
     fullName: formData.get("fullName"),
     username: formData.get("username"),
-    email: formData.get("email"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
@@ -57,7 +72,7 @@ export async function signUp(_prevState: AuthActionState, formData: FormData): P
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
+    email: usernameToAuthEmail(parsed.data.username),
     password: parsed.data.password,
     options: {
       data: {
@@ -69,7 +84,7 @@ export async function signUp(_prevState: AuthActionState, formData: FormData): P
 
   if (error) {
     if (error.message.toLowerCase().includes("already registered")) {
-      return { error: "Ja existe uma conta com esse e-mail" };
+      return { error: "Ja existe uma conta com esse nome de usuario" };
     }
     return { error: "Nao foi possivel criar a conta. Tente novamente." };
   }

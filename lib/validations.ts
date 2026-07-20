@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { UPLOAD_LIMITS } from "@/lib/constants";
 
-const usernameSchema = z
+export const usernameSchema = z
   .string()
   .min(3, "Minimo de 3 caracteres")
   .max(30, "Maximo de 30 caracteres")
@@ -14,7 +14,10 @@ const passwordSchema = z
   .regex(/[0-9]/, "Inclua ao menos um numero");
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail invalido"),
+  // Aceita nome de usuario (contas novas) ou e-mail (contas criadas antes
+  // da migracao para login por usuario) — por isso nao usa usernameSchema
+  // aqui, que rejeitaria o "@" de um e-mail.
+  identifier: z.string().min(1, "Informe seu usuario ou e-mail"),
   password: z.string().min(1, "Informe sua senha"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -22,7 +25,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const signupSchema = z.object({
   fullName: z.string().min(2, "Informe seu nome completo").max(100),
   username: usernameSchema,
-  email: z.string().email("E-mail invalido"),
   password: passwordSchema,
 });
 export type SignupInput = z.infer<typeof signupSchema>;

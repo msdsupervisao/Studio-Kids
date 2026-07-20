@@ -1,13 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 import { signIn, signUp, type AuthActionState } from "@/features/auth/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -48,16 +46,17 @@ export function LoginForm() {
       {mode === "login" ? (
         <form action={loginAction} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" name="email" type="email" placeholder="voce@exemplo.com" required autoComplete="email" />
+            <Label htmlFor="identifier">Usuario ou e-mail</Label>
+            <Input
+              id="identifier"
+              name="identifier"
+              placeholder="seu_usuario"
+              required
+              autoComplete="username"
+            />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Senha</Label>
-              <Link href={ROUTES.forgotPassword} className="text-xs text-primary hover:underline">
-                Esqueceu a senha?
-              </Link>
-            </div>
+            <Label htmlFor="password">Senha</Label>
             <PasswordInput id="password" name="password" required autoComplete="current-password" />
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
@@ -74,17 +73,6 @@ export function LoginForm() {
           <div className="space-y-1.5">
             <Label htmlFor="username">Nome de usuario</Label>
             <Input id="username" name="username" placeholder="seu_usuario" required autoComplete="username" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="signup-email">E-mail</Label>
-            <Input
-              id="signup-email"
-              name="email"
-              type="email"
-              placeholder="voce@exemplo.com"
-              required
-              autoComplete="email"
-            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="signup-password">Senha</Label>
