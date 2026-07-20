@@ -82,6 +82,43 @@ export async function searchChannels(query: string) {
   );
 }
 
+export async function listMySubscriptions() {
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("channel:channels ( id, slug, name, avatar_url )")
+    .eq("subscriber_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Falha ao carregar inscricoes: ${error.message}`);
+
+  const channels = (data ?? [])
+    .map((row) => row.channel)
+    .filter((channel): channel is NonNullable<typeof channel> => Boolean(channel));
+
+  return Promise.all(
+    channels.map(async (channel) => {
+      const { count } = await supabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("channel_id", channel.id);
+
+      return {
+        slug: channel.slug,
+        name: channel.name,
+        avatar_url: storage.getPublicUrl(STORAGE_BUCKETS.avatars, channel.avatar_url),
+        subscribersCount: count ?? 0,
+      };
+    })
+  );
+}
+
 export async function getMyChannels() {
   const supabase = await createClient();
   const storage = createStorageService(supabase);

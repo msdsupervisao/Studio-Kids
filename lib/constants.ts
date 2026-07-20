@@ -14,6 +14,7 @@ export const ROUTES = {
   profile: "/perfil",
   settings: "/configuracoes",
   notifications: "/notificacoes",
+  subscriptions: "/inscricoes",
   playlists: "/playlists",
   newPlaylist: "/playlists/nova",
   library: "/biblioteca",
