@@ -4,6 +4,7 @@ import { ListVideo } from "lucide-react";
 import { getPlaylistWithVideos } from "@/features/playlist/actions/playlist.actions";
 import { VideoCard } from "@/components/shared/VideoCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { AddVideosToPlaylist } from "@/features/playlist/components/AddVideosToPlaylist";
 import { createClient } from "@/services/supabase/server";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -27,13 +28,18 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{playlist.title}</h1>
-        {playlist.description && <p className="mt-1 text-sm text-muted-foreground">{playlist.description}</p>}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {playlist.videosCount} {playlist.videosCount === 1 ? "video" : "videos"} ·{" "}
-          {playlist.is_public ? "Publica" : "Privada"}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">{playlist.title}</h1>
+          {playlist.description && <p className="mt-1 text-sm text-muted-foreground">{playlist.description}</p>}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {playlist.videosCount} {playlist.videosCount === 1 ? "video" : "videos"} ·{" "}
+            {playlist.is_public ? "Publica" : "Privada"}
+          </p>
+        </div>
+        {isOwner && (
+          <AddVideosToPlaylist playlistId={playlist.id} initialVideoIds={playlist.videos.map((video) => video.id)} />
+        )}
       </div>
 
       {playlist.videos.length === 0 ? (
