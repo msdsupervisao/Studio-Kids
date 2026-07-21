@@ -7,14 +7,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-screen flex-col bg-background md:flex-row">
       <div className="relative hidden overflow-hidden bg-sidebar md:flex md:w-1/2 md:items-center md:justify-center lg:w-3/5">
         <Image
-          src="/images/theme/sidebar-robotica.jpeg"
+          src="/images/theme/topbar-lab.png"
           alt=""
           fill
           sizes="60vw"
           priority
-          className="object-cover"
+          className="object-cover object-[center_30%]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-sidebar/80 via-sidebar/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-sidebar/40 to-transparent" />
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
