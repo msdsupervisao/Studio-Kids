@@ -72,7 +72,7 @@ export function Sidebar({
             sizes="240px"
             className="object-cover object-[center_20%]"
           />
-          <div className="absolute inset-0 bg-sidebar/50 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-sidebar/90 backdrop-blur-sm" />
         </div>
       )}
       {title && !collapsed && (
