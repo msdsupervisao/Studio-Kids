@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ADMIN_NAV_ITEMS,
@@ -46,6 +48,7 @@ export function Sidebar({
   const pathname = usePathname();
   const sections = SECTIONS_BY_VARIANT[variant];
   const { collapsed } = useSidebar();
+  const [channelsExpanded, setChannelsExpanded] = useState(true);
 
   const wallpaper = variant === "app";
 
@@ -72,7 +75,7 @@ export function Sidebar({
             sizes="240px"
             className="object-cover object-[center_20%]"
           />
-          <div className="absolute inset-0 bg-sidebar/90 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-sidebar/97 backdrop-blur-md" />
         </div>
       )}
       {title && !collapsed && (
@@ -83,14 +86,26 @@ export function Sidebar({
       {sections.map((section, index) => (
         <div key={section.title ?? index} className="flex shrink-0 gap-1 md:mb-3 md:flex-col md:gap-1">
           {section.title && !collapsed && (
-            <p className="hidden px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:block first:md:pt-0">
-              {section.title}
-            </p>
+            section.title === "Inscricoes" && subscribedChannels.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setChannelsExpanded((current) => !current)}
+                aria-expanded={channelsExpanded}
+                className="hidden w-full items-center justify-between px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground md:flex first:md:pt-0"
+              >
+                {section.title}
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !channelsExpanded && "-rotate-90")} />
+              </button>
+            ) : (
+              <p className="hidden px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:block first:md:pt-0">
+                {section.title}
+              </p>
+            )
           )}
           {section.items.map((item) => (
             <NavLink key={item.href} item={item} active={isActive(item.href)} collapsed={collapsed} />
           ))}
-          {section.title === "Inscricoes" && !collapsed && subscribedChannels.length > 0 && (
+          {section.title === "Inscricoes" && !collapsed && channelsExpanded && subscribedChannels.length > 0 && (
             <div className="hidden md:block">
               {subscribedChannels.map((channel) => (
                 <Link
