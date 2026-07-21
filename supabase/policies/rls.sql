@@ -46,6 +46,18 @@ as $$
   );
 $$;
 
+create function public.comment_parent_in_video(parent_id_input uuid, video_id_input uuid)
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.comments
+    where id = parent_id_input and video_id = video_id_input
+  );
+$$;
+
 -- ---------------------------------------------------------------------
 -- profiles — publico para leitura (perfis sao paginas publicas), somente
 -- o proprio usuario edita o proprio registro. Insert e feito apenas pelo
@@ -132,8 +144,17 @@ create policy "comments_select_public" on public.comments
     )
   );
 
-create policy "comments_insert_authenticated" on public.comments
-  for insert with check (auth.uid() = author_id);
+create policy "comments_insert_published_video" on public.comments
+  for insert with check (
+    auth.uid() = author_id
+    and exists (
+      select 1 from public.videos
+      where videos.id = comments.video_id and videos.status = 'published'
+    )
+    and (
+      parent_id is null or public.comment_parent_in_video(parent_id, video_id)
+    )
+  );
 
 create policy "comments_update_own" on public.comments
   for update using (auth.uid() = author_id) with check (auth.uid() = author_id);
