@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Fredoka, Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import "./globals.css";
@@ -13,6 +13,15 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono-jb",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Fonte redonda e brincalhona, usada no nome da marca na tela de login —
+// contraste proposital com a Inter (sobria) usada no resto do app.
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -40,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${fredoka.variable} font-sans`}>
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>
