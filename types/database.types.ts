@@ -116,6 +116,12 @@ type VideoProgressRow = {
   updated_at: string;
 };
 
+type WatchLaterRow = {
+  user_id: string;
+  video_id: string;
+  added_at: string;
+};
+
 type NotificationsRow = {
   id: string;
   user_id: string;
@@ -311,6 +317,27 @@ export interface Database {
           },
           {
             foreignKeyName: "video_progress_video_id_fkey";
+            columns: ["video_id"];
+            isOneToOne: false;
+            referencedRelation: "videos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      watch_later: {
+        Row: WatchLaterRow;
+        Insert: Partial<WatchLaterRow> & { user_id: string; video_id: string };
+        Update: Partial<WatchLaterRow>;
+        Relationships: [
+          {
+            foreignKeyName: "watch_later_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "watch_later_video_id_fkey";
             columns: ["video_id"];
             isOneToOne: false;
             referencedRelation: "videos";

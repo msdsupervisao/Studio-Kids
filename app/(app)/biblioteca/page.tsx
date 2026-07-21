@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Heart, History, ListVideo } from "lucide-react";
+import { ChevronRight, Clock3, Heart, History, ListVideo } from "lucide-react";
 import { listWatchHistory } from "@/features/historico/actions/history.actions";
 import { listLikedVideos } from "@/features/reacoes/actions/reaction.actions";
 import { listMyPlaylists } from "@/features/playlist/actions/playlist.actions";
+import { listWatchLater } from "@/features/watch-later/actions/watch-later.actions";
 import { VideoCard } from "@/components/shared/VideoCard";
 import { PlaylistCard } from "@/components/shared/PlaylistCard";
 import { ROUTES } from "@/lib/constants";
@@ -11,10 +12,11 @@ import { ROUTES } from "@/lib/constants";
 export const metadata: Metadata = { title: "Biblioteca" };
 
 export default async function LibraryPage() {
-  const [history, liked, playlists] = await Promise.all([
+  const [history, liked, playlists, watchLater] = await Promise.all([
     listWatchHistory(),
     listLikedVideos(),
     listMyPlaylists(),
+    listWatchLater(),
   ]);
 
   return (
@@ -29,6 +31,18 @@ export default async function LibraryPage() {
         emptyText="Os videos que voce assistir aparecem aqui."
       >
         {history.slice(0, 4).map((video) => (
+          <VideoCard key={video.id} video={video} />
+        ))}
+      </LibrarySection>
+
+      <LibrarySection
+        icon={Clock3}
+        title="Ver mais tarde"
+        seeAllHref={ROUTES.watchLater}
+        showSeeAll={watchLater.length > 0}
+        emptyText="Videos que voce salvar para depois aparecem aqui."
+      >
+        {watchLater.slice(0, 4).map((video) => (
           <VideoCard key={video.id} video={video} />
         ))}
       </LibrarySection>

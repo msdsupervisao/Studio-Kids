@@ -119,6 +119,34 @@ export async function listMySubscriptions() {
   );
 }
 
+// Versao leve para a sidebar (renderizada em toda pagina do app) — sem a
+// contagem de inscritos por canal, que exigiria uma query extra por canal.
+export async function listMySubscribedChannelsForSidebar() {
+  const supabase = await createClient();
+  const storage = createStorageService(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("channel:channels ( slug, name, avatar_url )")
+    .eq("subscriber_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Falha ao carregar inscricoes: ${error.message}`);
+
+  return (data ?? [])
+    .map((row) => row.channel)
+    .filter((channel): channel is NonNullable<typeof channel> => Boolean(channel))
+    .map((channel) => ({
+      slug: channel.slug,
+      name: channel.name,
+      avatarUrl: storage.getPublicUrl(STORAGE_BUCKETS.avatars, channel.avatar_url),
+    }));
+}
+
 export async function getMyChannels() {
   const supabase = await createClient();
   const storage = createStorageService(supabase);

@@ -21,6 +21,7 @@ export const ROUTES = {
   library: "/biblioteca",
   history: "/historico",
   liked: "/curtidos",
+  watchLater: "/mais-tarde",
   upload: "/upload",
   myChannel: "/meu-canal",
   editMyChannel: "/meu-canal/editar",

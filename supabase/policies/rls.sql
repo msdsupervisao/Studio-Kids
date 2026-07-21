@@ -12,6 +12,7 @@ alter table public.playlists enable row level security;
 alter table public.playlist_videos enable row level security;
 alter table public.video_progress enable row level security;
 alter table public.notifications enable row level security;
+alter table public.watch_later enable row level security;
 
 -- ---------------------------------------------------------------------
 -- Helpers — security definer para evitar recursao de RLS ao checar role
@@ -205,6 +206,18 @@ create policy "playlist_videos_write_own" on public.playlist_videos
 -- ---------------------------------------------------------------------
 create policy "video_progress_own" on public.video_progress
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------
+-- watch_later — estritamente privado ao usuario
+-- ---------------------------------------------------------------------
+create policy "watch_later_select_own" on public.watch_later
+  for select using (auth.uid() = user_id);
+
+create policy "watch_later_insert_own" on public.watch_later
+  for insert with check (auth.uid() = user_id);
+
+create policy "watch_later_delete_own" on public.watch_later
+  for delete using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------
 -- notifications — leitura/atualizacao (marcar como lida) apenas do dono;

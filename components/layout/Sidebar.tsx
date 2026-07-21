@@ -4,15 +4,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ADMIN_NAV_ITEMS, APP_NAV_ITEMS, PROFESSOR_NAV_ITEMS } from "@/components/layout/nav-config";
+import {
+  ADMIN_NAV_ITEMS,
+  APP_NAV_SECTIONS,
+  PROFESSOR_NAV_ITEMS,
+  type NavItem,
+  type NavSection,
+} from "@/components/layout/nav-config";
 import { useSidebar } from "@/components/layout/SidebarProvider";
+import { ROUTES } from "@/lib/constants";
 
 export type SidebarVariant = "app" | "professor" | "admin";
 
-const ITEMS_BY_VARIANT = {
-  app: APP_NAV_ITEMS,
-  professor: PROFESSOR_NAV_ITEMS,
-  admin: ADMIN_NAV_ITEMS,
+export interface SubscribedChannel {
+  slug: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+const SECTIONS_BY_VARIANT: Record<SidebarVariant, NavSection[]> = {
+  app: APP_NAV_SECTIONS,
+  professor: [{ items: PROFESSOR_NAV_ITEMS }],
+  admin: [{ items: ADMIN_NAV_ITEMS }],
 };
 
 // Os itens (com referencias de componentes de icone) sao resolvidos
@@ -21,12 +34,24 @@ const ITEMS_BY_VARIANT = {
 // icones) como prop para este componente — cruzar a fronteira
 // servidor/cliente com um array contendo componentes quebra a
 // serializacao do React Server Components.
-export function Sidebar({ variant, title }: { variant: SidebarVariant; title?: string }) {
+export function Sidebar({
+  variant,
+  title,
+  subscribedChannels = [],
+}: {
+  variant: SidebarVariant;
+  title?: string;
+  subscribedChannels?: SubscribedChannel[];
+}) {
   const pathname = usePathname();
-  const items = ITEMS_BY_VARIANT[variant];
+  const sections = SECTIONS_BY_VARIANT[variant];
   const { collapsed } = useSidebar();
 
   const wallpaper = variant === "app";
+
+  function isActive(href: string) {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   return (
     <nav
@@ -34,7 +59,8 @@ export function Sidebar({ variant, title }: { variant: SidebarVariant; title?: s
       className={cn(
         "relative isolate flex gap-1 overflow-x-auto overflow-y-hidden border-b border-sidebar-border p-2 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:shrink-0 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-4 md:transition-[width] md:duration-200",
         collapsed ? "md:w-20" : "md:w-60",
-        !wallpaper && "bg-sidebar"
+        !wallpaper && "bg-sidebar",
+        "md:overflow-y-auto"
       )}
     >
       {wallpaper && (
@@ -54,27 +80,67 @@ export function Sidebar({ variant, title }: { variant: SidebarVariant; title?: s
           {title}
         </p>
       )}
-      {items.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            title={collapsed ? item.label : undefined}
-            className={cn(
-              "focus-ring flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors md:shrink",
-              collapsed && "md:flex-col md:gap-1 md:px-1 md:py-3 md:text-center",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-sidebar-foreground hover:bg-secondary"
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            <span className={cn(collapsed && "md:text-[10px] md:leading-tight")}>{item.label}</span>
-          </Link>
-        );
-      })}
+      {sections.map((section, index) => (
+        <div key={section.title ?? index} className="flex shrink-0 gap-1 md:mb-3 md:flex-col md:gap-1">
+          {section.title && !collapsed && (
+            <p className="hidden px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:block first:md:pt-0">
+              {section.title}
+            </p>
+          )}
+          {section.items.map((item) => (
+            <NavLink key={item.href} item={item} active={isActive(item.href)} collapsed={collapsed} />
+          ))}
+          {section.title === "Inscricoes" && !collapsed && subscribedChannels.length > 0 && (
+            <div className="hidden md:block">
+              {subscribedChannels.map((channel) => (
+                <Link
+                  key={channel.slug}
+                  href={ROUTES.channel(channel.slug)}
+                  className={cn(
+                    "focus-ring flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive(ROUTES.channel(channel.slug))
+                      ? "bg-primary/10 text-primary"
+                      : "text-sidebar-foreground hover:bg-secondary"
+                  )}
+                >
+                  {channel.avatarUrl ? (
+                    <Image
+                      src={channel.avatarUrl}
+                      alt={channel.name}
+                      width={20}
+                      height={20}
+                      className="h-5 w-5 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold">
+                      {channel.name.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="truncate">{channel.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </nav>
+  );
+}
+
+function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      title={collapsed ? item.label : undefined}
+      className={cn(
+        "focus-ring flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors md:shrink",
+        collapsed && "md:flex-col md:gap-1 md:px-1 md:py-3 md:text-center",
+        active ? "bg-primary/10 text-primary" : "text-sidebar-foreground hover:bg-secondary"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span className={cn(collapsed && "md:text-[10px] md:leading-tight")}>{item.label}</span>
+    </Link>
   );
 }

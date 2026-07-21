@@ -8,6 +8,7 @@ import { RelatedVideos } from "@/features/video/components/RelatedVideos";
 import { WatchLayout } from "@/features/video/components/WatchLayout";
 import { ShareButton } from "@/features/video/components/ShareButton";
 import { SaveButton } from "@/features/video/components/SaveButton";
+import { WatchLaterButton } from "@/features/video/components/WatchLaterButton";
 import { SubscribeButton } from "@/features/inscricoes/components/SubscribeButton";
 import { VideoReactions } from "@/features/reacoes/components/VideoReactions";
 import { CommentForm } from "@/features/comentarios/components/CommentForm";
@@ -16,6 +17,7 @@ import { getVideoDetail, getRelatedVideos } from "@/features/video/actions/video
 import { getVideoReactionSummary } from "@/features/reacoes/actions/reaction.actions";
 import { listComments } from "@/features/comentarios/actions/comment.actions";
 import { listMyPlaylistsForVideo } from "@/features/playlist/actions/playlist.actions";
+import { isInWatchLater } from "@/features/watch-later/actions/watch-later.actions";
 import { createClient } from "@/services/supabase/server";
 import { ROUTES } from "@/lib/constants";
 import { formatCompactNumber } from "@/utils/format";
@@ -41,11 +43,12 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [related, comments, reactions, playlists] = await Promise.all([
+  const [related, comments, reactions, playlists, savedForLater] = await Promise.all([
     getRelatedVideos(video.id, video.channel.id),
     listComments(video.id),
     getVideoReactionSummary(video.id),
     listMyPlaylistsForVideo(video.id),
+    isInWatchLater(video.id),
   ]);
 
   return (
@@ -92,6 +95,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
                   initialReaction={reactions.userReaction}
                 />
                 <ShareButton videoId={video.id} />
+                <WatchLaterButton videoId={video.id} isLoggedIn={Boolean(user)} initialSaved={savedForLater} />
                 <SaveButton videoId={video.id} isLoggedIn={Boolean(user)} initialPlaylists={playlists} />
               </div>
             </div>
