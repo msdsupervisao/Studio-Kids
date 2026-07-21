@@ -107,7 +107,11 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
           <div id="comentarios" className="space-y-4 scroll-mt-20">
             <h2 className="text-sm font-semibold">{comments.length} comentarios</h2>
-            {user ? (
+            {video.status !== "published" ? (
+              <p className="text-sm text-muted-foreground">
+                Os comentarios ficam disponiveis depois que o video for aprovado.
+              </p>
+            ) : user ? (
               <CommentForm videoId={video.id} />
             ) : (
               <p className="text-sm text-muted-foreground">
