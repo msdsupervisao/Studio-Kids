@@ -5,12 +5,12 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <div className="relative hidden overflow-hidden bg-sidebar md:flex md:w-1/2 md:items-center md:justify-center lg:w-3/5">
+      <div className="relative h-48 w-full shrink-0 overflow-hidden bg-sidebar sm:h-64 md:h-auto md:w-1/2 lg:w-3/5">
         <Image
           src="/images/theme/topbar-lab.png"
           alt=""
           fill
-          sizes="60vw"
+          sizes="(min-width: 768px) 60vw, 100vw"
           priority
           className="object-cover object-[center_30%]"
         />
