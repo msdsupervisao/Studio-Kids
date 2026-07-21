@@ -6,6 +6,7 @@ import { VideoCard } from "@/components/shared/VideoCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AddVideosToPlaylist } from "@/features/playlist/components/AddVideosToPlaylist";
 import { createClient } from "@/services/supabase/server";
+import { ROUTES } from "@/lib/constants";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -56,7 +57,11 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
       ) : (
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {playlist.videos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard
+              key={video.id}
+              video={video}
+              editHref={isOwner && canUpload ? ROUTES.professorVideoEdit(video.id) : undefined}
+            />
           ))}
         </div>
       )}
