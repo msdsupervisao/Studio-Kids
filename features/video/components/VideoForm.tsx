@@ -17,7 +17,17 @@ type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 const SHORT_MAX_SECONDS = 60;
 
-export function VideoForm({ channels, categories }: { channels: Channel[]; categories: Category[] }) {
+export function VideoForm({
+  channels,
+  categories,
+  targetPlaylistId,
+  targetPlaylistTitle,
+}: {
+  channels: Channel[];
+  categories: Category[];
+  targetPlaylistId?: string;
+  targetPlaylistTitle?: string;
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
@@ -26,7 +36,7 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [duration, setDuration] = useState(0);
   const [isShort, setIsShort] = useState(false);
-  const { submit, phase, progress, isSubmitting } = useUpload();
+  const { submit, phase, progress, isSubmitting } = useUpload(targetPlaylistId);
 
   const shortTooLong = isShort && duration > SHORT_MAX_SECONDS;
 
@@ -48,6 +58,11 @@ export function VideoForm({ channels, categories }: { channels: Channel[]; categ
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      {targetPlaylistId && (
+        <p className="rounded-lg bg-secondary px-3 py-2 text-sm text-secondary-foreground">
+          Este video sera adicionado a playlist{targetPlaylistTitle ? ` "${targetPlaylistTitle}"` : ""} apos o envio.
+        </p>
+      )}
       <VideoUploadDropzone onFileSelected={setVideoFile} onDurationDetected={setDuration} />
 
       <div className="space-y-1.5">

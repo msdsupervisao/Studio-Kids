@@ -16,6 +16,7 @@ export const ROUTES = {
   notifications: "/notificacoes",
   subscriptions: "/inscricoes",
   playlists: "/playlists",
+  playlist: (id: string) => `/playlists/${id}`,
   newPlaylist: "/playlists/nova",
   library: "/biblioteca",
   history: "/historico",

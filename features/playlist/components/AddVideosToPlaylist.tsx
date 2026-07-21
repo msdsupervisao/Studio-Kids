@@ -2,8 +2,9 @@
 
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ListPlus, Plus, Search } from "lucide-react";
+import { Check, ListPlus, Plus, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -11,6 +12,7 @@ import { searchVideos } from "@/features/video/actions/video.actions";
 import { addVideoToPlaylist, removeVideoFromPlaylist } from "@/features/playlist/actions/playlist.actions";
 import { formatDuration } from "@/utils/format";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 import type { VideoCardData } from "@/types/video.types";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -18,9 +20,11 @@ const SEARCH_DEBOUNCE_MS = 350;
 export function AddVideosToPlaylist({
   playlistId,
   initialVideoIds,
+  canUpload,
 }: {
   playlistId: string;
   initialVideoIds: string[];
+  canUpload: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -93,13 +97,21 @@ export function AddVideosToPlaylist({
           <DialogTitle>Adicionar videos a playlist</DialogTitle>
         </DialogHeader>
 
+        {canUpload && (
+          <Button asChild variant="outline" className="mb-4 w-full justify-center gap-2">
+            <Link href={`${ROUTES.upload}?playlist=${playlistId}`}>
+              <Upload className="h-4 w-4" /> Enviar video do computador
+            </Link>
+          </Button>
+        )}
+
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            autoFocus
+            autoFocus={!canUpload}
             value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
-            placeholder="Buscar aulas por titulo..."
+            placeholder="Ou busque entre aulas ja publicadas..."
             className="pl-9"
           />
         </div>

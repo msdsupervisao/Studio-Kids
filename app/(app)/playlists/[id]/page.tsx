@@ -26,6 +26,11 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
 
   if (!playlist.is_public && !isOwner) notFound();
 
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+  const canUpload = profile?.role === "professor" || profile?.role === "admin";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -38,7 +43,11 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
           </p>
         </div>
         {isOwner && (
-          <AddVideosToPlaylist playlistId={playlist.id} initialVideoIds={playlist.videos.map((video) => video.id)} />
+          <AddVideosToPlaylist
+            playlistId={playlist.id}
+            initialVideoIds={playlist.videos.map((video) => video.id)}
+            canUpload={canUpload}
+          />
         )}
       </div>
 

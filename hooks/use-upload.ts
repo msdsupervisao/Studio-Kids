@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createClient } from "@/services/supabase/client";
 import { createStorageService } from "@/services/storage/storage.service";
 import { createDraftVideo, finalizeVideoUpload, type UploadVideoInput } from "@/features/video/actions/video.actions";
+import { addVideoToPlaylist } from "@/features/playlist/actions/playlist.actions";
 import { compressVideo } from "@/features/video/utils/compress-video";
 import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
 
@@ -17,7 +18,7 @@ export type UploadPhase = "idle" | "compressing" | "sending" | "success" | "erro
  * corpos multipart grandes. Server Actions aqui so lidam com os campos
  * de texto (criar o rascunho, depois gravar os paths finais).
  */
-export function useUpload() {
+export function useUpload(targetPlaylistId?: string) {
   const router = useRouter();
   const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState(0);
@@ -62,9 +63,17 @@ export function useUpload() {
 
       await finalizeVideoUpload(videoId, videoPath, thumbnailPath);
 
+      if (targetPlaylistId) {
+        await addVideoToPlaylist(targetPlaylistId, videoId).catch(() => {});
+      }
+
       setPhase("success");
-      toast.success("Video enviado! Ele ficara visivel apos aprovacao.");
-      router.push(ROUTES.professorVideos);
+      toast.success(
+        targetPlaylistId
+          ? "Video enviado e adicionado a playlist! Ele ficara visivel apos aprovacao."
+          : "Video enviado! Ele ficara visivel apos aprovacao."
+      );
+      router.push(targetPlaylistId ? ROUTES.playlist(targetPlaylistId) : ROUTES.professorVideos);
       return { videoId };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha inesperada no upload";
