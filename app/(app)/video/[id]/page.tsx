@@ -25,7 +25,7 @@ import { formatCompactNumber } from "@/utils/format";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const video = await getVideoDetail(id);
-  return { title: video?.title ?? "Video" };
+  return { title: video?.title ?? "Vídeo" };
 }
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -110,10 +110,10 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div id="comentarios" className="space-y-4 scroll-mt-20">
-            <h2 className="text-sm font-semibold">{comments.length} comentarios</h2>
+            <h2 className="text-sm font-semibold">{comments.length} comentários</h2>
             {video.status !== "published" ? (
               <p className="text-sm text-muted-foreground">
-                Os comentarios ficam disponiveis depois que o video for aprovado.
+                Os comentários ficam disponíveis depois que o vídeo for aprovado.
               </p>
             ) : user ? (
               <CommentForm videoId={video.id} />

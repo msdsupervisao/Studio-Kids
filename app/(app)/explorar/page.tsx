@@ -24,7 +24,7 @@ export default async function ExplorePage({
       <CategoryFilterBar categories={categories} activeSlug={categoria} basePath={ROUTES.explore} />
 
       {videos.length === 0 ? (
-        <EmptyState icon={Compass} title="Nenhum video nessa categoria ainda" />
+        <EmptyState icon={Compass} title="Nenhum vídeo nessa categoria ainda" />
       ) : (
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {videos.map((video) => (

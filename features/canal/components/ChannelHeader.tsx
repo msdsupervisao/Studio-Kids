@@ -35,7 +35,7 @@ export function ChannelHeader({
             <h1 className="text-xl font-semibold tracking-tight">{channel.name}</h1>
             <p className="text-sm text-muted-foreground">
               @{channel.slug} · {formatCompactNumber(channel.subscribersCount)} inscritos ·{" "}
-              {channel.videosCount} videos
+              {channel.videosCount} vídeos
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function ChannelHeader({
             <Button asChild variant="secondary" className="gap-2">
               <Link href={ROUTES.professorVideos}>
                 <Video className="h-4 w-4" />
-                Gerir videos
+                Gerir vídeos
               </Link>
             </Button>
             <Button asChild variant="ghost" size="icon" aria-label="Abrir painel do professor">

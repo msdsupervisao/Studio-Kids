@@ -27,11 +27,11 @@ export function VideoUploadDropzone({
     if (!candidate) return;
 
     if (!(UPLOAD_LIMITS.allowedVideoTypes as readonly string[]).includes(candidate.type)) {
-      setError("Formato nao suportado. Use MP4, WebM ou MOV.");
+      setError("Formato não suportado. Use MP4, WebM ou MOV.");
       return;
     }
     if (candidate.size > UPLOAD_LIMITS.maxVideoSizeBytes) {
-      setError("O video excede o limite de 2GB.");
+      setError("O vídeo excede o limite de 2GB.");
       return;
     }
 
@@ -63,7 +63,7 @@ export function VideoUploadDropzone({
             <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
           </div>
         </div>
-        <button type="button" onClick={clear} className="focus-ring rounded-md p-1.5 hover:bg-secondary" aria-label="Remover video">
+        <button type="button" onClick={clear} className="focus-ring rounded-md p-1.5 hover:bg-secondary" aria-label="Remover vídeo">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -89,8 +89,8 @@ export function VideoUploadDropzone({
         )}
       >
         <Upload className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm font-medium">Arraste o video aqui ou clique para escolher</p>
-        <p className="text-xs text-muted-foreground">MP4, WebM ou MOV — ate 2GB</p>
+        <p className="text-sm font-medium">Arraste o vídeo aqui ou clique para escolher</p>
+        <p className="text-xs text-muted-foreground">MP4, WebM ou MOV — até 2GB</p>
         <input
           ref={inputRef}
           type="file"

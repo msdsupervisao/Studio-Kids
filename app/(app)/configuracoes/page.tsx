@@ -5,7 +5,7 @@ import { ROUTES } from "@/lib/constants";
 import { ProfileSettingsForm } from "./ProfileSettingsForm";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
-export const metadata: Metadata = { title: "Configuracoes" };
+export const metadata: Metadata = { title: "Configurações" };
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Configuracoes</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Configurações</h1>
       <ProfileSettingsForm profile={profile} />
 
       <div className="max-w-md border-t border-border pt-6">

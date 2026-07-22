@@ -8,6 +8,6 @@ import type { UserRole } from "@/types/user.types";
 export async function updateUserRole(userId: string, role: UserRole) {
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
-  if (error) throw new Error(`Falha ao atualizar papel do usuario: ${error.message}`);
+  if (error) throw new Error(`Falha ao atualizar papel do usuário: ${error.message}`);
   revalidatePath(ROUTES.adminUsers);
 }

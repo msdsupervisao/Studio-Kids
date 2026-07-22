@@ -20,8 +20,8 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
   return (
     <div className="w-full max-w-lg space-y-6">
       <div className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Como voce vai usar o Studio Kids?</h1>
-        <p className="text-sm text-muted-foreground">Voce pode mudar isso depois nas configuracoes.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Como você vai usar o Studio Kids?</h1>
+        <p className="text-sm text-muted-foreground">Você pode mudar isso depois nas configurações.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -72,7 +72,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="channelSlug">Endereco do canal</Label>
+                <Label htmlFor="channelSlug">Endereço do canal</Label>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <span>studiokids.com/canal/</span>
                   <Input

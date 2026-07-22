@@ -4,18 +4,18 @@ import { listMySubscriptions } from "@/features/canal/actions/channel.actions";
 import { ChannelCard } from "@/components/shared/ChannelCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 
-export const metadata: Metadata = { title: "Inscricoes" };
+export const metadata: Metadata = { title: "Inscrições" };
 
 export default async function SubscriptionsPage() {
   const channels = await listMySubscriptions();
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Inscricoes</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Inscrições</h1>
       {channels.length === 0 ? (
         <EmptyState
           icon={Tv}
-          title="Voce ainda nao se inscreveu em nenhum canal"
+          title="Você ainda não se inscreveu em nenhum canal"
           description="Inscreva-se em canais de professores para acompanhar as novas aulas aqui."
         />
       ) : (

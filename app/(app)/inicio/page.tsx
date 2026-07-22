@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { CategoryFilterBar } from "@/components/shared/CategoryFilterBar";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Inicio" };
+export const metadata: Metadata = { title: "Início" };
 
 export default async function HomePage({
   searchParams,
@@ -52,8 +52,8 @@ export default async function HomePage({
       {videos.length === 0 ? (
         <EmptyState
           icon={Compass}
-          title="Ainda nao ha aulas publicadas"
-          description="Assim que professores publicarem videos, eles aparecerao aqui."
+          title="Ainda não há aulas publicadas"
+          description="Assim que professores publicarem vídeos, eles aparecerão aqui."
         />
       ) : (
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

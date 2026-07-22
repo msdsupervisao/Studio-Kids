@@ -52,7 +52,7 @@ export function EditChannelForm({ channel }: { channel: Channel }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="slug">Endereco</Label>
+        <Label htmlFor="slug">Endereço</Label>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <span>/canal/</span>
           <Input id="slug" name="slug" defaultValue={channel.slug} required className="h-9" />
@@ -60,15 +60,15 @@ export function EditChannelForm({ channel }: { channel: Channel }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">Descricao</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Textarea id="description" name="description" defaultValue={channel.description ?? ""} maxLength={1000} />
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state.success && <p className="text-sm text-success">Alteracoes salvas.</p>}
+      {state.success && <p className="text-sm text-success">Alterações salvas.</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Salvando..." : "Salvar alteracoes"}
+        {pending ? "Salvando..." : "Salvar alterações"}
       </Button>
     </form>
   );

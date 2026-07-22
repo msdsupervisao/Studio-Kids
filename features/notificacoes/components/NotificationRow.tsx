@@ -17,17 +17,17 @@ export const ICON_BY_TYPE: Record<NotificationType, typeof Bell> = {
 };
 
 export const MESSAGE_BY_TYPE: Record<NotificationType, (payload: Record<string, unknown>) => string> = {
-  video_published: (p) => `O video "${p.title ?? ""}" foi publicado.`,
-  new_subscriber: (p) => `${p.name ?? "Alguem"} se inscreveu no seu canal.`,
-  new_comment: (p) => `${p.name ?? "Alguem"} comentou no seu video.`,
-  comment_reply: (p) => `${p.name ?? "Alguem"} respondeu seu comentario.`,
-  video_approved: (p) => `Seu video "${p.title ?? ""}" foi aprovado.`,
-  video_rejected: (p) => `Seu video "${p.title ?? ""}" foi rejeitado.`,
+  video_published: (p) => `O vídeo "${p.title ?? ""}" foi publicado.`,
+  new_subscriber: (p) => `${p.name ?? "Alguém"} se inscreveu no seu canal.`,
+  new_comment: (p) => `${p.name ?? "Alguém"} comentou no seu vídeo.`,
+  comment_reply: (p) => `${p.name ?? "Alguém"} respondeu seu comentário.`,
+  video_approved: (p) => `Seu vídeo "${p.title ?? ""}" foi aprovado.`,
+  video_rejected: (p) => `Seu vídeo "${p.title ?? ""}" foi rejeitado.`,
 };
 
 export function NotificationRow({ notification, compact }: { notification: Notification; compact?: boolean }) {
   const Icon = ICON_BY_TYPE[notification.type] ?? Bell;
-  const message = MESSAGE_BY_TYPE[notification.type]?.(notification.payload) ?? "Nova notificacao";
+  const message = MESSAGE_BY_TYPE[notification.type]?.(notification.payload) ?? "Nova notificação";
   const href = typeof notification.payload.href === "string" ? notification.payload.href : undefined;
 
   const content = (

@@ -61,7 +61,7 @@ export function VideoReactions({
         onClick={() => handleClick("dislike")}
         className={cn("rounded-none", reaction === "dislike" && "bg-secondary")}
         aria-pressed={reaction === "dislike"}
-        aria-label="Nao gostei"
+        aria-label="Não gostei"
       >
         <ThumbsDown className={cn("h-4 w-4", reaction === "dislike" && "fill-current")} />
       </Button>

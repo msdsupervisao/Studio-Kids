@@ -41,7 +41,7 @@ export async function signIn(_prevState: AuthActionState, formData: FormData): P
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   // "@" no campo => conta antiga, criada com e-mail real, antes da
@@ -54,7 +54,7 @@ export async function signIn(_prevState: AuthActionState, formData: FormData): P
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password: parsed.data.password });
   if (error) {
-    return { error: "Usuario ou senha incorretos" };
+    return { error: "Usuário ou senha incorretos" };
   }
 
   redirect(ROUTES.home);
@@ -67,7 +67,7 @@ export async function signUp(_prevState: AuthActionState, formData: FormData): P
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const supabase = await createClient();
@@ -84,9 +84,9 @@ export async function signUp(_prevState: AuthActionState, formData: FormData): P
 
   if (error) {
     if (error.message.toLowerCase().includes("already registered")) {
-      return { error: "Ja existe uma conta com esse nome de usuario" };
+      return { error: "Já existe uma conta com esse nome de usuário" };
     }
-    return { error: "Nao foi possivel criar a conta. Tente novamente." };
+    return { error: "Não foi possível criar a conta. Tente novamente." };
   }
 
   redirect(ROUTES.firstAccess);
@@ -105,7 +105,7 @@ export async function requestPasswordReset(
 ): Promise<AuthActionState> {
   const parsed = forgotPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "E-mail invalido" };
+    return { error: parsed.error.issues[0]?.message ?? "E-mail inválido" };
   }
 
   const supabase = await createClient();

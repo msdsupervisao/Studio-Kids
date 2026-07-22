@@ -5,7 +5,7 @@ import type { PlaylistWithVideos } from "@/types/playlist.types";
 
 export function PlaylistGrid({
   playlists,
-  emptyTitle = "Voce ainda nao criou nenhuma playlist",
+  emptyTitle = "Você ainda não criou nenhuma playlist",
 }: {
   playlists: PlaylistWithVideos[];
   emptyTitle?: string;

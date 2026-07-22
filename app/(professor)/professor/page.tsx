@@ -5,7 +5,7 @@ import { listVideosByChannel } from "@/features/video/actions/video.actions";
 import { StatsCards } from "@/features/estatisticas/components/StatsCards";
 import { createClient } from "@/services/supabase/server";
 
-export const metadata: Metadata = { title: "Area do professor" };
+export const metadata: Metadata = { title: "Área do professor" };
 
 export default async function ProfessorOverviewPage() {
   const supabase = await createClient();
@@ -27,13 +27,13 @@ export default async function ProfessorOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Visao geral</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Visão geral</h1>
       <StatsCards
         items={[
           { label: "Canais", value: channels.length, icon: Tv },
-          { label: "Videos publicados", value: publishedCount, icon: Film },
+          { label: "Vídeos publicados", value: publishedCount, icon: Film },
           { label: "Inscritos", value: totalSubscribers, icon: Users },
-          { label: "Visualizacoes", value: totalViews, icon: Eye },
+          { label: "Visualizações", value: totalViews, icon: Eye },
         ]}
       />
     </div>

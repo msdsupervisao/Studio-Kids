@@ -17,7 +17,7 @@ export default async function AdminStoragePage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Storage</h1>
         <p className="text-sm text-muted-foreground">
-          Visao rapida dos buckets do Supabase Storage usados pelo Studio Kids.
+          Visão rápida dos buckets do Supabase Storage usados pelo Studio Kids.
         </p>
       </div>
       <StatsCards
@@ -28,7 +28,7 @@ export default async function AdminStoragePage() {
         ]}
       />
       <p className="text-xs text-muted-foreground">
-        Detalhamento por arquivo, uso em bytes e limpeza de orfaos ficam para uma proxima iteracao (ver ROADMAP.md).
+        Detalhamento por arquivo, uso em bytes e limpeza de órfãos ficam para uma próxima iteração (ver ROADMAP.md).
       </p>
     </div>
   );

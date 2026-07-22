@@ -61,7 +61,7 @@ export function LoginForm() {
       {mode === "login" ? (
         <form action={loginAction} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="identifier">Usuario ou e-mail</Label>
+            <Label htmlFor="identifier">Usuário ou e-mail</Label>
             <Input
               id="identifier"
               name="identifier"
@@ -86,7 +86,7 @@ export function LoginForm() {
             <Input id="fullName" name="fullName" placeholder="Seu nome" required autoComplete="name" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="username">Nome de usuario</Label>
+            <Label htmlFor="username">Nome de usuário</Label>
             <Input
               id="username"
               name="username"
@@ -97,7 +97,7 @@ export function LoginForm() {
               onChange={(event) => setSignupUsername(sanitizeUsername(event.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Sem espacos, acentos ou maiusculas — ajustamos automaticamente.
+              Sem espaços, acentos ou maiúsculas — ajustamos automaticamente.
             </p>
           </div>
           <div className="space-y-1.5">
@@ -109,7 +109,7 @@ export function LoginForm() {
               autoComplete="new-password"
               minLength={8}
             />
-            <p className="text-xs text-muted-foreground">Minimo 8 caracteres, 1 maiuscula e 1 numero.</p>
+            <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, 1 maiúscula e 1 número.</p>
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <Button type="submit" className="w-full" disabled={pending}>

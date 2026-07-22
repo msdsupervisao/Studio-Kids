@@ -21,14 +21,14 @@ export async function updateProfile(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   const fullName = sanitizePlainText(String(formData.get("fullName") ?? ""));
   const username = String(formData.get("username") ?? "").toLowerCase();
   const bio = formData.get("bio") ? sanitizeMultilineText(String(formData.get("bio"))) : null;
 
   if (fullName.length < 2) return { error: "Nome muito curto" };
-  if (!/^[a-z0-9_.]{3,30}$/.test(username)) return { error: "Nome de usuario invalido" };
+  if (!/^[a-z0-9_.]{3,30}$/.test(username)) return { error: "Nome de usuário inválido" };
 
   // Ao contrario de channels.avatar_url (resolvido para URL publica so
   // dentro de channel.actions.ts), profiles.avatar_url e lido em varios
@@ -54,8 +54,8 @@ export async function updateProfile(
     .eq("id", user.id);
 
   if (error) {
-    if (error.code === "23505") return { error: "Esse nome de usuario ja esta em uso" };
-    return { error: "Nao foi possivel salvar as alteracoes" };
+    if (error.code === "23505") return { error: "Esse nome de usuário já está em uso" };
+    return { error: "Não foi possível salvar as alterações" };
   }
 
   revalidatePath(ROUTES.settings);
@@ -76,18 +76,18 @@ export async function updatePassword(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   const parsed = changePasswordSchema.safeParse({
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: "Nao foi possivel alterar a senha. Tente novamente." };
+  if (error) return { error: "Não foi possível alterar a senha. Tente novamente." };
 
   return { success: true };
 }

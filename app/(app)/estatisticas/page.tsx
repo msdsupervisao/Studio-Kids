@@ -9,11 +9,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import type { VideoStatus } from "@/types/video.types";
 
-export const metadata: Metadata = { title: "Estatisticas" };
+export const metadata: Metadata = { title: "Estatísticas" };
 
 const STATUS_LABEL: Record<VideoStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   published: { label: "Publicado", variant: "success" },
-  pending: { label: "Em analise", variant: "secondary" },
+  pending: { label: "Em análise", variant: "secondary" },
   draft: { label: "Rascunho", variant: "secondary" },
   rejected: { label: "Rejeitado", variant: "destructive" },
 };
@@ -25,8 +25,8 @@ export default async function StatsPage() {
     return (
       <EmptyState
         icon={BarChart3}
-        title="Sem estatisticas ainda"
-        description="Crie um canal e publique videos para acompanhar o desempenho aqui."
+        title="Sem estatísticas ainda"
+        description="Crie um canal e publique vídeos para acompanhar o desempenho aqui."
       />
     );
   }
@@ -44,26 +44,26 @@ export default async function StatsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Estatisticas</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Estatísticas</h1>
       <StatsCards
         items={[
-          { label: "Videos publicados", value: published.length, icon: Film },
-          { label: "Visualizacoes totais", value: totalViews, icon: Eye },
+          { label: "Vídeos publicados", value: published.length, icon: Film },
+          { label: "Visualizações totais", value: totalViews, icon: Eye },
         ]}
       />
-      {topVideos.length > 0 && <StatsCharts title="Videos mais assistidos" items={topVideos} />}
+      {topVideos.length > 0 && <StatsCharts title="Vídeos mais assistidos" items={topVideos} />}
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold">Todos os videos</h2>
+        <h2 className="text-sm font-semibold">Todos os vídeos</h2>
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5">Titulo</th>
+                <th className="px-4 py-2.5">Título</th>
                 <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5 text-right">Visualizacoes</th>
+                <th className="px-4 py-2.5 text-right">Visualizações</th>
                 <th className="px-4 py-2.5 text-right">Likes</th>
-                <th className="px-4 py-2.5 text-right">Comentarios</th>
+                <th className="px-4 py-2.5 text-right">Comentários</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

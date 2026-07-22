@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Pesquisa" };
 
 const TABS = [
-  { value: "videos", label: "Videos" },
+  { value: "videos", label: "Vídeos" },
   { value: "canais", label: "Canais" },
   { value: "playlists", label: "Playlists" },
 ] as const;
@@ -30,7 +30,7 @@ export default async function SearchPage({
   const query = q?.trim() ?? "";
 
   if (!query) {
-    return <EmptyState icon={SearchX} title="Digite algo na busca para comecar" />;
+    return <EmptyState icon={SearchX} title="Digite algo na busca para começar" />;
   }
 
   const activeTab: SearchTab = TABS.some((t) => t.value === tab) ? (tab as SearchTab) : "videos";
@@ -60,7 +60,7 @@ export default async function SearchPage({
 
       {activeTab === "videos" &&
         (videos.length === 0 ? (
-          <EmptyState icon={SearchX} title={`Nenhum video para "${query}"`} />
+          <EmptyState icon={SearchX} title={`Nenhum vídeo para "${query}"`} />
         ) : (
           <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {videos.map((video) => (

@@ -70,8 +70,8 @@ export function useUpload(targetPlaylistId?: string) {
       setPhase("success");
       toast.success(
         targetPlaylistId
-          ? "Video enviado e adicionado a playlist! Ele ficara visivel apos aprovacao."
-          : "Video enviado! Ele ficara visivel apos aprovacao."
+          ? "Vídeo enviado e adicionado à playlist! Ele ficará visível após aprovação."
+          : "Vídeo enviado! Ele ficará visível após aprovação."
       );
       router.push(targetPlaylistId ? ROUTES.playlist(targetPlaylistId) : ROUTES.professorVideos);
       return { videoId };

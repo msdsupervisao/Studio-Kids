@@ -34,7 +34,7 @@ export async function listPublishedVideos(options: { limit?: number; categorySlu
   }
 
   const { data, error } = await query.overrideTypes<VideoCardRow[]>();
-  if (error) throw new Error(`Falha ao carregar videos: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar vídeos: ${error.message}`);
 
   return (data ?? []).map((row) =>
     toVideoCardData(
@@ -83,7 +83,7 @@ export async function listVideosByChannel(channelId: string) {
     .order("created_at", { ascending: false })
     .overrideTypes<Array<VideoCardRow & { status: VideoStatus; is_short: boolean }>>();
 
-  if (error) throw new Error(`Falha ao carregar videos do canal: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar vídeos do canal: ${error.message}`);
   return (data ?? []).map((row) => ({
     ...toVideoCardData(
       row,
@@ -106,7 +106,7 @@ export async function listPendingVideos() {
     .order("created_at", { ascending: true })
     .overrideTypes<Array<VideoCardRow & { status: VideoStatus }>>();
 
-  if (error) throw new Error(`Falha ao carregar videos pendentes: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar vídeos pendentes: ${error.message}`);
   return (data ?? []).map((row) => ({
     ...toVideoCardData(
       row,
@@ -184,7 +184,7 @@ export async function getRelatedVideos(videoId: string, channelId: string) {
     .limit(8)
     .overrideTypes<VideoCardRow[]>();
 
-  if (error) throw new Error(`Falha ao carregar videos relacionados: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar vídeos relacionados: ${error.message}`);
   return (data ?? []).map((row) =>
     toVideoCardData(
       row,
@@ -223,13 +223,13 @@ type CreateDraftVideoInput = Omit<UploadVideoInput, "videoFile" | "thumbnailFile
  */
 export async function createDraftVideo(input: CreateDraftVideoInput) {
   const parsed = createDraftVideoSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do video invalidos");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do vídeo inválidos");
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessao expirada. Faca login novamente.");
+  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
 
   const { data: video, error } = await supabase
     .from("videos")
@@ -247,13 +247,13 @@ export async function createDraftVideo(input: CreateDraftVideoInput) {
     .select("id")
     .single();
 
-  if (error || !video) throw new Error(`Falha ao criar video: ${error?.message ?? "erro desconhecido"}`);
+  if (error || !video) throw new Error(`Falha ao criar vídeo: ${error?.message ?? "erro desconhecido"}`);
   return { videoId: video.id as string };
 }
 
 export async function finalizeVideoUpload(videoId: string, videoPath: string, thumbnailPath: string | null) {
   if (!/^[0-9a-f-]{36}$/i.test(videoId) || !videoPath || (thumbnailPath !== null && !thumbnailPath)) {
-    throw new Error("Dados de upload invalidos");
+    throw new Error("Dados de upload inválidos");
   }
   const supabase = await createClient();
   const { error } = await supabase
@@ -267,15 +267,15 @@ export async function finalizeVideoUpload(videoId: string, videoPath: string, th
 
 export async function updateVideoStatus(videoId: string, status: VideoStatus, rejectionReason?: string) {
   const parsed = videoModerationSchema.safeParse({ videoId, status, rejectionReason });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados de moderacao invalidos");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados de moderação inválidos");
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessao expirada. Faca login novamente.");
+  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  if (roleError || !isAdmin) throw new Error("Apenas administradores podem moderar videos.");
+  if (roleError || !isAdmin) throw new Error("Apenas administradores podem moderar vídeos.");
 
   const { error } = await supabase
     .from("videos")
@@ -286,7 +286,7 @@ export async function updateVideoStatus(videoId: string, status: VideoStatus, re
     })
     .eq("id", videoId);
 
-  if (error) throw new Error(`Falha ao atualizar status do video: ${error.message}`);
+  if (error) throw new Error(`Falha ao atualizar status do vídeo: ${error.message}`);
   revalidatePath(ROUTES.adminUploads);
   revalidatePath(ROUTES.professorVideos);
 }
@@ -294,7 +294,7 @@ export async function updateVideoStatus(videoId: string, status: VideoStatus, re
 export async function deleteVideo(videoId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("videos").delete().eq("id", videoId);
-  if (error) throw new Error(`Falha ao remover video: ${error.message}`);
+  if (error) throw new Error(`Falha ao remover vídeo: ${error.message}`);
   revalidatePath(ROUTES.professorVideos);
 }
 
@@ -347,7 +347,7 @@ export interface UpdateVideoInput {
 
 export async function updateVideo(videoId: string, input: UpdateVideoInput) {
   const parsed = updateVideoSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do video invalidos");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do vídeo inválidos");
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -360,7 +360,7 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput) {
     })
     .eq("id", videoId);
 
-  if (error) throw new Error(`Falha ao salvar alteracoes: ${error.message}`);
+  if (error) throw new Error(`Falha ao salvar alterações: ${error.message}`);
   revalidatePath(ROUTES.professorVideos);
   revalidatePath(ROUTES.video(videoId));
 }

@@ -20,8 +20,8 @@ export async function createCategory(
   const supabase = await createClient();
   const { error } = await supabase.from("categories").insert({ name, slug: slugify(name) });
   if (error) {
-    if (error.code === "23505") return { error: "Ja existe uma categoria com esse nome" };
-    return { error: "Nao foi possivel criar a categoria" };
+    if (error.code === "23505") return { error: "Já existe uma categoria com esse nome" };
+    return { error: "Não foi possível criar a categoria" };
   }
 
   revalidatePath(ROUTES.adminCategories);

@@ -34,7 +34,7 @@ export function ForgotPasswordForm() {
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Enviando..." : "Enviar link de recuperacao"}
+        {pending ? "Enviando..." : "Enviar link de recuperação"}
       </Button>
       <Link href={ROUTES.login} className="block text-center text-sm text-muted-foreground hover:text-foreground">
         Voltar para o login

@@ -25,10 +25,10 @@ export default async function LibraryPage() {
 
       <LibrarySection
         icon={History}
-        title="Historico"
+        title="Histórico"
         seeAllHref={ROUTES.history}
         showSeeAll={history.length > 0}
-        emptyText="Os videos que voce assistir aparecem aqui."
+        emptyText="Os vídeos que você assistir aparecem aqui."
       >
         {history.slice(0, 4).map((video) => (
           <VideoCard key={video.id} video={video} />
@@ -40,7 +40,7 @@ export default async function LibraryPage() {
         title="Ver mais tarde"
         seeAllHref={ROUTES.watchLater}
         showSeeAll={watchLater.length > 0}
-        emptyText="Videos que voce salvar para depois aparecem aqui."
+        emptyText="Vídeos que você salvar para depois aparecem aqui."
       >
         {watchLater.slice(0, 4).map((video) => (
           <VideoCard key={video.id} video={video} />
@@ -49,10 +49,10 @@ export default async function LibraryPage() {
 
       <LibrarySection
         icon={Heart}
-        title="Videos curtidos"
+        title="Vídeos curtidos"
         seeAllHref={ROUTES.liked}
         showSeeAll={liked.length > 0}
-        emptyText="Videos que voce curtir aparecem aqui."
+        emptyText="Vídeos que você curtir aparecem aqui."
       >
         {liked.slice(0, 4).map((video) => (
           <VideoCard key={video.id} video={video} />
@@ -64,7 +64,7 @@ export default async function LibraryPage() {
         title="Suas playlists"
         seeAllHref={ROUTES.playlists}
         showSeeAll={playlists.length > 0}
-        emptyText="Voce ainda nao criou nenhuma playlist."
+        emptyText="Você ainda não criou nenhuma playlist."
       >
         {playlists.slice(0, 4).map((playlist) => (
           <PlaylistCard key={playlist.id} playlist={playlist} />

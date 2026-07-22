@@ -101,7 +101,7 @@ export async function listChannelPosts(channelId: string, options: { forOwner?: 
 
 async function requireUser(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) throw new Error("Faca login para continuar");
+  if (!auth.user) throw new Error("Faça login para continuar");
   return auth.user;
 }
 
@@ -113,7 +113,7 @@ export async function createChannelPost(formData: FormData) {
     videoId: formData.get("videoId") || undefined,
     scheduledAt: formData.get("scheduledAt") || undefined,
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Comunicado invalido");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Comunicado inválido");
   const { channelId, kind, content, videoId, scheduledAt } = parsed.data;
 
   const options = formData
@@ -123,8 +123,8 @@ export async function createChannelPost(formData: FormData) {
     .slice(0, 4);
 
   if (kind === "text" && !content.trim()) throw new Error("Escreva uma mensagem para publicar");
-  if ((kind === "poll" || kind === "quiz") && options.length < 2) throw new Error("Adicione ao menos 2 opcoes");
-  if (kind === "video" && !videoId) throw new Error("Selecione um video do canal para compartilhar");
+  if ((kind === "poll" || kind === "quiz") && options.length < 2) throw new Error("Adicione ao menos 2 opções");
+  if (kind === "video" && !videoId) throw new Error("Selecione um vídeo do canal para compartilhar");
 
   const supabase = await createClient();
   const storage = createStorageService(supabase);
@@ -137,7 +137,7 @@ export async function createChannelPost(formData: FormData) {
       .eq("id", videoId)
       .single();
     if (!video || video.channel_id !== channelId || video.status !== "published") {
-      throw new Error("Video invalido para este canal");
+      throw new Error("Vídeo inválido para este canal");
     }
   }
 
@@ -156,7 +156,7 @@ export async function createChannelPost(formData: FormData) {
     for (const file of imageFiles.slice(0, 4)) {
       optionImagePaths.push(await uploadPostImage(storage, channelId, file));
     }
-    while (options.length < optionImagePaths.length) options.push(`Opcao ${options.length + 1}`);
+    while (options.length < optionImagePaths.length) options.push(`Opção ${options.length + 1}`);
     options.length = optionImagePaths.length;
   }
 
@@ -180,7 +180,7 @@ export async function createChannelPost(formData: FormData) {
 
 async function uploadPostImage(storage: ReturnType<typeof createStorageService>, channelId: string, file: File) {
   if (file.size > UPLOAD_LIMITS.maxThumbnailSizeBytes || !(UPLOAD_LIMITS.allowedImageTypes as readonly string[]).includes(file.type)) {
-    throw new Error("Imagem deve ser JPEG, PNG ou WebP de ate 5MB");
+    throw new Error("Imagem deve ser JPEG, PNG ou WebP de até 5MB");
   }
   const path = `${channelId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${file.name.split(".").pop() ?? "jpg"}`;
   return storage.upload(STORAGE_BUCKETS.postImages, path, file);
@@ -188,7 +188,7 @@ async function uploadPostImage(storage: ReturnType<typeof createStorageService>,
 
 export async function voteOnChannelPost(postId: string, optionIndex: number) {
   if (!z.string().uuid().safeParse(postId).success || !Number.isInteger(optionIndex) || optionIndex < 0) {
-    throw new Error("Voto invalido");
+    throw new Error("Voto inválido");
   }
   const supabase = await createClient();
   const user = await requireUser(supabase);
@@ -201,7 +201,7 @@ export async function voteOnChannelPost(postId: string, optionIndex: number) {
 }
 
 export async function setChannelPostStatus(postId: string, status: Extract<ChannelPostStatus, "published" | "archived">) {
-  if (!z.string().uuid().safeParse(postId).success) throw new Error("Post invalido");
+  if (!z.string().uuid().safeParse(postId).success) throw new Error("Post inválido");
   const supabase = await createClient();
   await requireUser(supabase);
   const { error } = await supabase

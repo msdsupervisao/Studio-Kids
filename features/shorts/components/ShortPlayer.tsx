@@ -74,7 +74,7 @@ export function ShortPlayer({ item }: { item: ShortFeedItem }) {
 
   function toggleReaction(clicked: VideoReactionType) {
     if (!user) {
-      toast.error("Entre para curtir videos");
+      toast.error("Entre para curtir vídeos");
       return;
     }
     const previous = reaction;
@@ -110,7 +110,7 @@ export function ShortPlayer({ item }: { item: ShortFeedItem }) {
       await navigator.clipboard.writeText(url);
       toast.success("Link copiado");
     } catch {
-      toast.error("Nao foi possivel copiar o link");
+      toast.error("Não foi possível copiar o link");
     }
   }
 
@@ -197,7 +197,7 @@ export function ShortPlayer({ item }: { item: ShortFeedItem }) {
               onClick={() => toggleReaction("dislike")}
               className="focus-ring flex flex-col items-center gap-1"
               aria-pressed={reaction === "dislike"}
-              aria-label="Nao gostei"
+              aria-label="Não gostei"
             >
               <span
                 className={cn(

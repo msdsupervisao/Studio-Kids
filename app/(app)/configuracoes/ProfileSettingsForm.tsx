@@ -33,7 +33,7 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="username">Nome de usuario</Label>
+        <Label htmlFor="username">Nome de usuário</Label>
         <Input id="username" name="username" defaultValue={profile.username} required />
       </div>
 
@@ -43,10 +43,10 @@ export function ProfileSettingsForm({ profile }: { profile: Profile }) {
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state.success && <p className="text-sm text-success">Alteracoes salvas.</p>}
+      {state.success && <p className="text-sm text-success">Alterações salvas.</p>}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Salvando..." : "Salvar alteracoes"}
+        {pending ? "Salvando..." : "Salvar alterações"}
       </Button>
     </form>
   );

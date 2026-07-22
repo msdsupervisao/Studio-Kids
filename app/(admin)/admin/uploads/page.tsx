@@ -5,7 +5,7 @@ import { VideoApprovalActions } from "@/features/video/components/VideoApprovalA
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDuration, formatRelativeDate } from "@/utils/format";
 
-export const metadata: Metadata = { title: "Moderacao de videos" };
+export const metadata: Metadata = { title: "Moderação de vídeos" };
 
 export default async function AdminUploadsPage() {
   const videos = await listPendingVideos();
@@ -13,14 +13,14 @@ export default async function AdminUploadsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Moderacao de videos</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Moderação de vídeos</h1>
         <p className="text-sm text-muted-foreground">
-          Revise os videos enviados por professores antes de ficarem publicos.
+          Revise os vídeos enviados por professores antes de ficarem públicos.
         </p>
       </div>
 
       {videos.length === 0 ? (
-        <EmptyState icon={CheckSquare} title="Nada para revisar" description="Todos os videos enviados ja foram avaliados." />
+        <EmptyState icon={CheckSquare} title="Nada para revisar" description="Todos os vídeos enviados já foram avaliados." />
       ) : (
         <ul className="space-y-3">
           {videos.map((video) => (

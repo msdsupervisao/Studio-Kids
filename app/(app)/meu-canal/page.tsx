@@ -21,7 +21,7 @@ export default async function MyChannelPage() {
     return (
       <EmptyState
         icon={Tv}
-        title="Voce ainda nao tem um canal"
+        title="Você ainda não tem um canal"
         action={
           <Button asChild>
             <Link href={ROUTES.professorChannels}>Criar canal</Link>

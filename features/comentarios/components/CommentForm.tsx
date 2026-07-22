@@ -11,7 +11,7 @@ export function CommentForm({
   videoId,
   parentId = null,
   onSuccess,
-  placeholder = "Adicione um comentario...",
+  placeholder = "Adicione um comentário...",
 }: {
   videoId: string;
   parentId?: string | null;

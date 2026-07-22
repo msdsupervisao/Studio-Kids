@@ -13,10 +13,10 @@ import { formatDuration, formatRelativeDate, formatViews } from "@/utils/format"
 const KIND_META: Record<ChannelPost["kind"], { label: string; icon: typeof MessageSquare }> = {
   text: { label: "Comunicado", icon: MessageSquare },
   poll: { label: "Enquete", icon: BarChart3 },
-  quiz: { label: "Questionario", icon: CheckCircle2 },
+  quiz: { label: "Questionário", icon: CheckCircle2 },
   image: { label: "Imagem", icon: ImageIcon },
   image_poll: { label: "Enquete de imagem", icon: Images },
-  video: { label: "Video", icon: VideoIcon },
+  video: { label: "Vídeo", icon: VideoIcon },
 };
 
 export function ChannelCommunity({ posts, isOwner }: { posts: ChannelPost[]; isOwner: boolean }) {
@@ -44,7 +44,7 @@ function ChannelPostCard({ post, isOwner }: { post: ChannelPost; isOwner: boolea
         toast.success(post.kind === "quiz" ? "Resposta registrada" : "Voto registrado");
       } catch (error) {
         setSelected(null);
-        toast.error(error instanceof Error ? error.message : "Nao foi possivel registrar seu voto");
+        toast.error(error instanceof Error ? error.message : "Não foi possível registrar seu voto");
       }
     });
   }
@@ -55,7 +55,7 @@ function ChannelPostCard({ post, isOwner }: { post: ChannelPost; isOwner: boolea
         await setChannelPostStatus(post.id, status);
         toast.success(status === "archived" ? "Comunicado arquivado" : "Comunicado publicado");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Nao foi possivel atualizar o comunicado");
+        toast.error(error instanceof Error ? error.message : "Não foi possível atualizar o comunicado");
       }
     });
   }

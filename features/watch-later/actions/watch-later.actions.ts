@@ -29,10 +29,10 @@ export async function addToWatchLater(videoId: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Faca login para salvar videos");
+  if (!user) throw new Error("Faça login para salvar vídeos");
 
   const { error } = await supabase.from("watch_later").insert({ user_id: user.id, video_id: videoId });
-  if (error) throw new Error(`Falha ao salvar video: ${error.message}`);
+  if (error) throw new Error(`Falha ao salvar vídeo: ${error.message}`);
   revalidatePath(ROUTES.watchLater);
 }
 
@@ -44,7 +44,7 @@ export async function removeFromWatchLater(videoId: string) {
   if (!user) return;
 
   const { error } = await supabase.from("watch_later").delete().eq("user_id", user.id).eq("video_id", videoId);
-  if (error) throw new Error(`Falha ao remover video: ${error.message}`);
+  if (error) throw new Error(`Falha ao remover vídeo: ${error.message}`);
   revalidatePath(ROUTES.watchLater);
 }
 

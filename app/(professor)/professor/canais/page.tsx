@@ -15,7 +15,7 @@ export default async function ProfessorChannelsPage() {
       <div className="space-y-4">
         <h1 className="text-xl font-semibold tracking-tight">Seus canais</h1>
         {channels.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Voce ainda nao tem nenhum canal.</p>
+          <p className="text-sm text-muted-foreground">Você ainda não tem nenhum canal.</p>
         ) : (
           <ul className="space-y-2">
             {channels.map((channel) => (

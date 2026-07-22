@@ -372,7 +372,7 @@ export function VideoPlayer({
             step={0.1}
             value={currentTime}
             onChange={handleSeekChange}
-            aria-label="Progresso do video"
+            aria-label="Progresso do vídeo"
             className="video-seek-range"
             style={{
               background: `linear-gradient(to right, var(--primary) ${playedPercent}%, rgba(255,255,255,0.35) ${playedPercent}%, rgba(255,255,255,0.35) ${bufferedPercent}%, rgba(255,255,255,0.18) ${bufferedPercent}%)`,
@@ -411,7 +411,7 @@ export function VideoPlayer({
           <div className="ml-auto flex items-center gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button type="button" aria-label="Velocidade de reproducao" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/10">
+                <button type="button" aria-label="Velocidade de reprodução" className="focus-ring flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/10">
                   <Settings className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>

@@ -33,7 +33,7 @@ export function ShareButton({ videoId }: { videoId: string }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 p-3">
-        <DropdownMenuLabel className="px-0">Link do video</DropdownMenuLabel>
+        <DropdownMenuLabel className="px-0">Link do vídeo</DropdownMenuLabel>
         <div className="mt-1 flex items-center gap-2">
           <input
             readOnly

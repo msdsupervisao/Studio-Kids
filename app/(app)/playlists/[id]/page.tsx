@@ -39,8 +39,8 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
           <h1 className="text-xl font-semibold tracking-tight">{playlist.title}</h1>
           {playlist.description && <p className="mt-1 text-sm text-muted-foreground">{playlist.description}</p>}
           <p className="mt-1 text-xs text-muted-foreground">
-            {playlist.videosCount} {playlist.videosCount === 1 ? "video" : "videos"} ·{" "}
-            {playlist.is_public ? "Publica" : "Privada"}
+            {playlist.videosCount} {playlist.videosCount === 1 ? "vídeo" : "vídeos"} ·{" "}
+            {playlist.is_public ? "Pública" : "Privada"}
           </p>
         </div>
         {isOwner && (
@@ -53,7 +53,7 @@ export default async function PlaylistDetailPage({ params }: { params: Promise<{
       </div>
 
       {playlist.videos.length === 0 ? (
-        <EmptyState icon={ListVideo} title="Essa playlist ainda nao tem videos" />
+        <EmptyState icon={ListVideo} title="Essa playlist ainda não tem vídeos" />
       ) : (
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {playlist.videos.map((video) => (

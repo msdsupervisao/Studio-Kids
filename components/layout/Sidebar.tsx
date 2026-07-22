@@ -58,7 +58,7 @@ export function Sidebar({
 
   return (
     <nav
-      aria-label={title ?? "Navegacao"}
+      aria-label={title ?? "Navegação"}
       className={cn(
         "relative isolate flex gap-1 overflow-x-auto overflow-y-hidden border-b border-sidebar-border p-2 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:shrink-0 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-4 md:transition-[width] md:duration-200",
         collapsed ? "md:w-20" : "md:w-60",
@@ -86,7 +86,7 @@ export function Sidebar({
       {sections.map((section, index) => (
         <div key={section.title ?? index} className="flex shrink-0 gap-1 md:mb-3 md:flex-col md:gap-1">
           {section.title && !collapsed && (
-            section.title === "Inscricoes" && subscribedChannels.length > 0 ? (
+            section.title === "Inscrições" && subscribedChannels.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setChannelsExpanded((current) => !current)}
@@ -105,7 +105,7 @@ export function Sidebar({
           {section.items.map((item) => (
             <NavLink key={item.href} item={item} active={isActive(item.href)} collapsed={collapsed} />
           ))}
-          {section.title === "Inscricoes" && !collapsed && channelsExpanded && subscribedChannels.length > 0 && (
+          {section.title === "Inscrições" && !collapsed && channelsExpanded && subscribedChannels.length > 0 && (
             <div className="hidden md:block">
               {subscribedChannels.map((channel) => (
                 <Link

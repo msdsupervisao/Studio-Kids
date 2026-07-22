@@ -8,12 +8,12 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body.draftTitle !== "string" || !body.draftTitle.trim()) {
-    return NextResponse.json({ error: "Informe ao menos um titulo provisorio" }, { status: 400 });
+    return NextResponse.json({ error: "Informe ao menos um título provisório" }, { status: 400 });
   }
 
   try {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(suggestion);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Falha ao gerar sugestao com IA";
+    const message = error instanceof Error ? error.message : "Falha ao gerar sugestão com IA";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

@@ -6,7 +6,7 @@ import type { VideoCardData } from "@/types/video.types";
 
 export function RelatedVideos({ videos }: { videos: VideoCardData[] }) {
   if (videos.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhum outro video neste canal ainda.</p>;
+    return <p className="text-sm text-muted-foreground">Nenhum outro vídeo neste canal ainda.</p>;
   }
 
   return (

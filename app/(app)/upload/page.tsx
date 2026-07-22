@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Enviar video" };
+export const metadata: Metadata = { title: "Enviar vídeo" };
 
 export default async function UploadPage({
   searchParams,
@@ -30,8 +30,8 @@ export default async function UploadPage({
     return (
       <EmptyState
         icon={ShieldAlert}
-        title="Apenas professores podem enviar videos"
-        description="Fale com a nossa equipe se voce quer se tornar um professor no Studio Kids."
+        title="Apenas professores podem enviar vídeos"
+        description="Fale com a nossa equipe se você quer se tornar um professor no Studio Kids."
       />
     );
   }
@@ -46,7 +46,7 @@ export default async function UploadPage({
     return (
       <EmptyState
         icon={Tv}
-        title="Voce ainda nao tem um canal"
+        title="Você ainda não tem um canal"
         description="Crie um canal antes de enviar sua primeira aula."
         action={
           <Button asChild>
@@ -61,7 +61,7 @@ export default async function UploadPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Enviar video</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Enviar vídeo</h1>
       <VideoForm
         channels={channels}
         categories={categories}

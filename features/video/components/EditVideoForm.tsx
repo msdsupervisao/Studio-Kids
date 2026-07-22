@@ -45,10 +45,10 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
           await updateVideoThumbnail(video.id, path);
         }
 
-        toast.success("Video atualizado");
+        toast.success("Vídeo atualizado");
         router.push(ROUTES.professorVideos);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao salvar alteracoes");
+        toast.error(error instanceof Error ? error.message : "Falha ao salvar alterações");
       }
     });
   }
@@ -56,12 +56,12 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div className="space-y-1.5">
-        <Label htmlFor="title">Titulo</Label>
+        <Label htmlFor="title">Título</Label>
         <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={150} />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">Descricao</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Textarea
           id="description"
           value={description}
@@ -106,7 +106,7 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Salvando..." : "Salvar alteracoes"}
+        {isPending ? "Salvando..." : "Salvar alterações"}
       </Button>
     </form>
   );

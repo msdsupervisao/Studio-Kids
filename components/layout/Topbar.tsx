@@ -126,7 +126,7 @@ export function Topbar({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link href={ROUTES.upload}><Upload /> Enviar video ou Short</Link>
+                <Link href={ROUTES.upload}><Upload /> Enviar vídeo ou Short</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={ROUTES.newPlaylist}><Tv /> Criar playlist</Link>
@@ -139,7 +139,7 @@ export function Topbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Notificacoes">
+            <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">
               <Bell />
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
@@ -150,7 +150,7 @@ export function Topbar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80 p-0">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <p className="text-sm font-semibold">Notificacoes</p>
+              <p className="text-sm font-semibold">Notificações</p>
               {unreadCount > 0 && (
                 <button
                   type="button"
@@ -162,7 +162,7 @@ export function Topbar({
               )}
             </div>
             {notifications.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-muted-foreground">Nenhuma notificacao ainda</p>
+              <p className="px-3 py-8 text-center text-sm text-muted-foreground">Nenhuma notificação ainda</p>
             ) : (
               <ul className="max-h-96 divide-y divide-border overflow-y-auto">
                 {notifications.slice(0, 8).map((notification) => (
@@ -199,7 +199,7 @@ export function Topbar({
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={ROUTES.settings}>
-                  <Settings /> Configuracoes
+                  <Settings /> Configurações
                 </Link>
               </DropdownMenuItem>
               {canUpload && (

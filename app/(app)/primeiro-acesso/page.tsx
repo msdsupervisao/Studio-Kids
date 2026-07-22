@@ -18,7 +18,7 @@ export default async function FirstAccessPage() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center">
-      <OnboardingWizard fullName={profile?.full_name ?? "voce"} />
+      <OnboardingWizard fullName={profile?.full_name ?? "você"} />
     </div>
   );
 }

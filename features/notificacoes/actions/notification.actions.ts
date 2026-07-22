@@ -20,7 +20,7 @@ export async function listNotifications(): Promise<Notification[]> {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) throw new Error(`Falha ao carregar notificacoes: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar notificações: ${error.message}`);
   return (data ?? []) as Notification[];
 }
 
@@ -30,7 +30,7 @@ export async function markNotificationAsRead(notificationId: string) {
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId);
-  if (error) throw new Error(`Falha ao marcar notificacao: ${error.message}`);
+  if (error) throw new Error(`Falha ao marcar notificação: ${error.message}`);
   revalidatePath(ROUTES.notifications);
 }
 
@@ -46,7 +46,7 @@ export async function markAllNotificationsAsRead() {
     .update({ read_at: new Date().toISOString() })
     .eq("user_id", user.id)
     .is("read_at", null);
-  if (error) throw new Error(`Falha ao marcar notificacoes: ${error.message}`);
+  if (error) throw new Error(`Falha ao marcar notificações: ${error.message}`);
   revalidatePath(ROUTES.notifications);
 }
 
@@ -59,5 +59,5 @@ export async function markAllNotificationsAsRead() {
 export async function notifyUser(userId: string, type: NotificationType, payload: Record<string, unknown>) {
   const supabase = createServiceRoleClient();
   const { error } = await supabase.from("notifications").insert({ user_id: userId, type, payload });
-  if (error) throw new Error(`Falha ao criar notificacao: ${error.message}`);
+  if (error) throw new Error(`Falha ao criar notificação: ${error.message}`);
 }

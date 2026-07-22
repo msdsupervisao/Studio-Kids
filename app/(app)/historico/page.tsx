@@ -5,7 +5,7 @@ import { ClearHistoryButton } from "@/features/historico/components/ClearHistory
 import { VideoCard } from "@/components/shared/VideoCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 
-export const metadata: Metadata = { title: "Historico" };
+export const metadata: Metadata = { title: "Histórico" };
 
 export default async function HistoryPage() {
   const history = await listWatchHistory();
@@ -14,8 +14,8 @@ export default async function HistoryPage() {
     return (
       <EmptyState
         icon={History}
-        title="Seu historico esta vazio"
-        description="Os videos que voce assistir aparecem aqui."
+        title="Seu histórico está vazio"
+        description="Os vídeos que você assistir aparecem aqui."
       />
     );
   }
@@ -23,7 +23,7 @@ export default async function HistoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Historico</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Histórico</h1>
         <ClearHistoryButton />
       </div>
       <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

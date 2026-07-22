@@ -17,7 +17,7 @@ type ChannelVideo = VideoCardData & { status: VideoStatus; isShort: boolean };
 
 const STATUS_LABEL: Record<VideoStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   published: { label: "Publicado", variant: "success" },
-  pending: { label: "Em analise", variant: "secondary" },
+  pending: { label: "Em análise", variant: "secondary" },
   draft: { label: "Rascunho", variant: "secondary" },
   rejected: { label: "Rejeitado", variant: "destructive" },
 };
@@ -48,9 +48,9 @@ export function ChannelTabs({
   return (
     <Tabs defaultValue="videos">
       <TabsList>
-        <TabsTrigger value="videos">Videos</TabsTrigger>
+        <TabsTrigger value="videos">Vídeos</TabsTrigger>
         {showStatus && <TabsTrigger value="publicados">Publicados</TabsTrigger>}
-        {showStatus && <TabsTrigger value="em-analise">Em analise</TabsTrigger>}
+        {showStatus && <TabsTrigger value="em-analise">Em análise</TabsTrigger>}
         {showStatus && rejectedVideos.length > 0 && <TabsTrigger value="rejeitados">Rejeitados</TabsTrigger>}
         {(shorts.length > 0 || showStatus) && <TabsTrigger value="shorts">Shorts</TabsTrigger>}
         <TabsTrigger value="playlists">Playlists</TabsTrigger>
@@ -59,22 +59,22 @@ export function ChannelTabs({
       </TabsList>
 
       <TabsContent value="videos">
-        <VideoGrid videos={regularVideos} showStatus={showStatus} emptyTitle="Nenhum video publicado ainda" />
+        <VideoGrid videos={regularVideos} showStatus={showStatus} emptyTitle="Nenhum vídeo publicado ainda" />
       </TabsContent>
 
       {showStatus && (
         <TabsContent value="publicados">
-          <VideoGrid videos={publishedVideos} showStatus={false} emptyTitle="Nenhum video publicado ainda" />
+          <VideoGrid videos={publishedVideos} showStatus={false} emptyTitle="Nenhum vídeo publicado ainda" />
         </TabsContent>
       )}
       {showStatus && (
         <TabsContent value="em-analise">
-          <VideoGrid videos={pendingVideos} showStatus emptyTitle="Nenhum video aguardando revisao" />
+          <VideoGrid videos={pendingVideos} showStatus emptyTitle="Nenhum vídeo aguardando revisão" />
         </TabsContent>
       )}
       {showStatus && rejectedVideos.length > 0 && (
         <TabsContent value="rejeitados">
-          <VideoGrid videos={rejectedVideos} showStatus emptyTitle="Nenhum video rejeitado" />
+          <VideoGrid videos={rejectedVideos} showStatus emptyTitle="Nenhum vídeo rejeitado" />
         </TabsContent>
       )}
 
@@ -98,7 +98,7 @@ export function ChannelTabs({
       <TabsContent value="playlists">
         <PlaylistGrid
           playlists={playlists}
-          emptyTitle={isOwner ? "Voce ainda nao criou nenhuma playlist" : "Nenhuma playlist publica ainda"}
+          emptyTitle={isOwner ? "Você ainda não criou nenhuma playlist" : "Nenhuma playlist pública ainda"}
         />
       </TabsContent>
 
@@ -108,7 +108,7 @@ export function ChannelTabs({
 
       <TabsContent value="sobre">
         <div className="max-w-2xl space-y-2 text-sm">
-          <p className="text-foreground">{description || "Este canal ainda nao tem uma descricao."}</p>
+          <p className="text-foreground">{description || "Este canal ainda não tem uma descrição."}</p>
           <p className="text-muted-foreground">No Studio Kids desde {formatRelativeDate(createdAt)}</p>
         </div>
       </TabsContent>

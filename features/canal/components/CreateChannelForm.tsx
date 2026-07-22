@@ -21,14 +21,14 @@ export function CreateChannelForm() {
         <Input id="name" name="name" value={name} onChange={(event) => setName(event.target.value)} required />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="slug">Endereco</Label>
+        <Label htmlFor="slug">Endereço</Label>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <span>/canal/</span>
           <Input id="slug" name="slug" defaultValue={slugify(name)} key={slugify(name)} required className="h-9" />
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="description">Descricao (opcional)</Label>
+        <Label htmlFor="description">Descrição (opcional)</Label>
         <Textarea id="description" name="description" maxLength={1000} />
       </div>
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}

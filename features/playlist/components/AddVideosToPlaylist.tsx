@@ -89,18 +89,18 @@ export function AddVideosToPlaylist({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm" className="gap-2">
-          <ListPlus className="h-4 w-4" /> Adicionar videos
+          <ListPlus className="h-4 w-4" /> Adicionar vídeos
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adicionar videos a playlist</DialogTitle>
+          <DialogTitle>Adicionar vídeos à playlist</DialogTitle>
         </DialogHeader>
 
         {canUpload && (
           <Button asChild variant="outline" className="mb-4 w-full justify-center gap-2">
             <Link href={`${ROUTES.upload}?playlist=${playlistId}`}>
-              <Upload className="h-4 w-4" /> Enviar video do computador
+              <Upload className="h-4 w-4" /> Enviar vídeo do computador
             </Link>
           </Button>
         )}
@@ -111,20 +111,20 @@ export function AddVideosToPlaylist({
             autoFocus={!canUpload}
             value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
-            placeholder="Ou busque entre aulas ja publicadas..."
+            placeholder="Ou busque entre aulas já publicadas..."
             className="pl-9"
           />
         </div>
 
         <div className="mt-4 space-y-1">
           {!query.trim() && (
-            <p className="py-8 text-center text-sm text-muted-foreground">Digite para buscar videos.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Digite para buscar vídeos.</p>
           )}
           {query.trim() && searching && (
             <p className="py-8 text-center text-sm text-muted-foreground">Buscando...</p>
           )}
           {query.trim() && !searching && results.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum video encontrado.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum vídeo encontrado.</p>
           )}
           {results.map((video) => {
             const added = addedIds.has(video.id);

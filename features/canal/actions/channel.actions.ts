@@ -96,7 +96,7 @@ export async function listMySubscriptions() {
     .eq("subscriber_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(`Falha ao carregar inscricoes: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar inscrições: ${error.message}`);
 
   const channels = (data ?? [])
     .map((row) => row.channel)
@@ -135,7 +135,7 @@ export async function listMySubscribedChannelsForSidebar() {
     .eq("subscriber_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(`Falha ao carregar inscricoes: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar inscrições: ${error.message}`);
 
   return (data ?? [])
     .map((row) => row.channel)
@@ -184,14 +184,14 @@ export async function createChannel(
     description: formData.get("description") || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   const { error } = await supabase.from("channels").insert({
     owner_id: user.id,
@@ -201,8 +201,8 @@ export async function createChannel(
   });
 
   if (error) {
-    if (error.code === "23505") return { error: "Ja existe um canal com esse endereco" };
-    return { error: "Nao foi possivel criar o canal" };
+    if (error.code === "23505") return { error: "Já existe um canal com esse endereço" };
+    return { error: "Não foi possível criar o canal" };
   }
 
   revalidatePath(ROUTES.professorChannels);
@@ -220,7 +220,7 @@ export async function updateChannel(
     description: formData.get("description") || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const supabase = await createClient();
@@ -236,7 +236,7 @@ export async function updateChannel(
       avatarFile.size > UPLOAD_LIMITS.maxThumbnailSizeBytes ||
       !(UPLOAD_LIMITS.allowedImageTypes as readonly string[]).includes(avatarFile.type)
     ) {
-      return { error: "Avatar deve ser uma imagem JPEG, PNG ou WebP de ate 5MB" };
+      return { error: "Avatar deve ser uma imagem JPEG, PNG ou WebP de até 5MB" };
     }
     avatarPath = `${channelId}/avatar-${Date.now()}.${avatarFile.name.split(".").pop() ?? "jpg"}`;
     await storage.upload(STORAGE_BUCKETS.avatars, avatarPath, avatarFile);
@@ -246,7 +246,7 @@ export async function updateChannel(
       bannerFile.size > UPLOAD_LIMITS.maxThumbnailSizeBytes ||
       !(UPLOAD_LIMITS.allowedImageTypes as readonly string[]).includes(bannerFile.type)
     ) {
-      return { error: "Capa deve ser uma imagem JPEG, PNG ou WebP de ate 5MB" };
+      return { error: "Capa deve ser uma imagem JPEG, PNG ou WebP de até 5MB" };
     }
     bannerPath = `${channelId}/banner-${Date.now()}.${bannerFile.name.split(".").pop() ?? "jpg"}`;
     await storage.upload(STORAGE_BUCKETS.banners, bannerPath, bannerFile);
@@ -264,8 +264,8 @@ export async function updateChannel(
     .eq("id", channelId);
 
   if (error) {
-    if (error.code === "23505") return { error: "Ja existe um canal com esse endereco" };
-    return { error: "Nao foi possivel salvar as alteracoes" };
+    if (error.code === "23505") return { error: "Já existe um canal com esse endereço" };
+    return { error: "Não foi possível salvar as alterações" };
   }
 
   revalidatePath(ROUTES.channel(parsed.data.slug));

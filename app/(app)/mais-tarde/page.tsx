@@ -13,8 +13,8 @@ export default async function WatchLaterPage() {
     return (
       <EmptyState
         icon={Clock3}
-        title="Nenhum video salvo para depois"
-        description="Videos que voce salvar para assistir mais tarde aparecem aqui."
+        title="Nenhum vídeo salvo para depois"
+        description="Vídeos que você salvar para assistir mais tarde aparecem aqui."
       />
     );
   }

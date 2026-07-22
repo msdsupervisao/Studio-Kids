@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import type { VideoStatus } from "@/types/video.types";
 
-export const metadata: Metadata = { title: "Meus videos" };
+export const metadata: Metadata = { title: "Meus vídeos" };
 
 const STATUS_LABEL: Record<VideoStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   published: { label: "Publicado", variant: "success" },
-  pending: { label: "Em analise", variant: "secondary" },
+  pending: { label: "Em análise", variant: "secondary" },
   draft: { label: "Rascunho", variant: "secondary" },
   rejected: { label: "Rejeitado", variant: "destructive" },
 };
@@ -28,19 +28,19 @@ export default async function ProfessorVideosPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Meus videos</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Meus vídeos</h1>
         <Button asChild size="sm">
-          <Link href={ROUTES.upload}>Enviar video</Link>
+          <Link href={ROUTES.upload}>Enviar vídeo</Link>
         </Button>
       </div>
 
       {videos.length === 0 ? (
         <EmptyState
           icon={Film}
-          title="Voce ainda nao enviou nenhum video"
+          title="Você ainda não enviou nenhum vídeo"
           action={
             <Button asChild>
-              <Link href={ROUTES.upload}>Enviar meu primeiro video</Link>
+              <Link href={ROUTES.upload}>Enviar meu primeiro vídeo</Link>
             </Button>
           }
         />

@@ -60,13 +60,13 @@ export function VideoForm({
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       {targetPlaylistId && (
         <p className="rounded-lg bg-secondary px-3 py-2 text-sm text-secondary-foreground">
-          Este video sera adicionado a playlist{targetPlaylistTitle ? ` "${targetPlaylistTitle}"` : ""} apos o envio.
+          Este vídeo será adicionado à playlist{targetPlaylistTitle ? ` "${targetPlaylistTitle}"` : ""} após o envio.
         </p>
       )}
       <VideoUploadDropzone onFileSelected={setVideoFile} onDurationDetected={setDuration} />
 
       <div className="space-y-1.5">
-        <Label>Tipo de video</Label>
+        <Label>Tipo de vídeo</Label>
         <div className="inline-flex rounded-lg border border-border p-1">
           <button
             type="button"
@@ -76,7 +76,7 @@ export function VideoForm({
               !isShort ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Video normal
+            Vídeo normal
           </button>
           <button
             type="button"
@@ -91,8 +91,8 @@ export function VideoForm({
         </div>
         {shortTooLong && (
           <p className="text-sm text-destructive">
-            Shorts devem ter ate {SHORT_MAX_SECONDS} segundos — esse video tem {duration}s. Escolha outro arquivo ou
-            envie como video normal.
+            Shorts devem ter até {SHORT_MAX_SECONDS} segundos — esse vídeo tem {duration}s. Escolha outro arquivo ou
+            envie como vídeo normal.
           </p>
         )}
       </div>
@@ -117,7 +117,7 @@ export function VideoForm({
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="title">Titulo</Label>
+          <Label htmlFor="title">Título</Label>
           <AIGenerateButton
             draftTitle={title}
             draftDescription={description}
@@ -138,7 +138,7 @@ export function VideoForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">Descricao</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Textarea
           id="description"
           value={description}
@@ -177,17 +177,17 @@ export function VideoForm({
 
       <Button type="submit" disabled={!videoFile || !channelId || isSubmitting || shortTooLong} className="w-full">
         {phase === "compressing"
-          ? `Comprimindo video... ${progress}%`
+          ? `Comprimindo vídeo... ${progress}%`
           : phase === "sending"
             ? "Enviando..."
             : isShort
-              ? "Enviar Short para analise"
-              : "Enviar para analise"}
+              ? "Enviar Short para análise"
+              : "Enviar para análise"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
         {phase === "compressing"
-          ? "Reduzindo o tamanho do video no seu navegador antes do envio — isso pode levar alguns minutos."
-          : "Seu video ficara visivel apos a aprovacao da nossa equipe."}
+          ? "Reduzindo o tamanho do vídeo no seu navegador antes do envio — isso pode levar alguns minutos."
+          : "Seu vídeo ficará visível após a aprovação da nossa equipe."}
       </p>
     </form>
   );

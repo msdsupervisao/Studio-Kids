@@ -11,7 +11,7 @@ export function NotificationList({ notifications }: { notifications: Notificatio
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border px-6 py-16 text-center">
         <BellOff className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm font-medium">Nenhuma notificacao ainda</p>
+        <p className="text-sm font-medium">Nenhuma notificação ainda</p>
       </div>
     );
   }

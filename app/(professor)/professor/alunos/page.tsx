@@ -8,8 +8,8 @@ export default function ProfessorStudentsPage() {
   return (
     <EmptyState
       icon={Construction}
-      title="Em construcao"
-      description="Em breve voce vera aqui quem se inscreveu no seu canal e o progresso deles nas suas aulas. Veja o ROADMAP.md para o planejamento."
+      title="Em construção"
+      description="Em breve você verá aqui quem se inscreveu no seu canal e o progresso deles nas suas aulas. Veja o ROADMAP.md para o planejamento."
     />
   );
 }

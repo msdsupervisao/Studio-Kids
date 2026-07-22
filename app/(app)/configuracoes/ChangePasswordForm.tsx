@@ -21,7 +21,7 @@ export function ChangePasswordForm() {
       <div className="space-y-1.5">
         <Label htmlFor="password">Nova senha</Label>
         <PasswordInput id="password" name="password" required autoComplete="new-password" minLength={8} />
-        <p className="text-xs text-muted-foreground">Minimo 8 caracteres, 1 maiuscula e 1 numero.</p>
+        <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, 1 maiúscula e 1 número.</p>
       </div>
 
       <div className="space-y-1.5">

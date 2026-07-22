@@ -41,7 +41,7 @@ export async function setVideoReaction(videoId: string, reaction: VideoReactionT
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessao expirada. Faca login novamente.");
+  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
 
   const { data: existing } = await supabase
     .from("video_reactions")
@@ -56,12 +56,12 @@ export async function setVideoReaction(videoId: string, reaction: VideoReactionT
       .delete()
       .eq("video_id", videoId)
       .eq("user_id", user.id);
-    if (error) throw new Error(`Falha ao remover reacao: ${error.message}`);
+    if (error) throw new Error(`Falha ao remover reação: ${error.message}`);
   } else {
     const { error } = await supabase
       .from("video_reactions")
       .upsert({ video_id: videoId, user_id: user.id, reaction }, { onConflict: "user_id,video_id" });
-    if (error) throw new Error(`Falha ao registrar reacao: ${error.message}`);
+    if (error) throw new Error(`Falha ao registrar reação: ${error.message}`);
   }
 
   revalidatePath(ROUTES.video(videoId));
@@ -83,7 +83,7 @@ export async function listLikedVideos(): Promise<VideoCardData[]> {
     .order("created_at", { ascending: false })
     .overrideTypes<Array<{ video: VideoCardRow | null }>>();
 
-  if (error) throw new Error(`Falha ao carregar videos curtidos: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar vídeos curtidos: ${error.message}`);
 
   return (data ?? [])
     .filter((row): row is typeof row & { video: VideoCardRow } => Boolean(row.video))

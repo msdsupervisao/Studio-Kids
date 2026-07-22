@@ -15,7 +15,7 @@ export async function listComments(videoId: string): Promise<CommentWithAuthor[]
     .eq("video_id", videoId)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(`Falha ao carregar comentarios: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar comentários: ${error.message}`);
 
   const rows = (data ?? []).filter((row) => row.author) as CommentWithAuthor[];
   const topLevel = rows.filter((row) => !row.parent_id);
@@ -43,14 +43,14 @@ export async function createComment(
     content: formData.get("content"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Comentario invalido" };
+    return { error: parsed.error.issues[0]?.message ?? "Comentário inválido" };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Faca login para comentar" };
+  if (!user) return { error: "Faça login para comentar" };
 
   const { error } = await supabase.from("comments").insert({
     video_id: parsed.data.videoId,
@@ -59,7 +59,7 @@ export async function createComment(
     content: sanitizeMultilineText(parsed.data.content),
   });
 
-  if (error) return { error: "Nao foi possivel publicar o comentario" };
+  if (error) return { error: "Não foi possível publicar o comentário" };
 
   revalidatePath(ROUTES.video(videoId));
   return {};
@@ -68,6 +68,6 @@ export async function createComment(
 export async function deleteComment(commentId: string, videoId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("comments").delete().eq("id", commentId);
-  if (error) throw new Error(`Falha ao remover comentario: ${error.message}`);
+  if (error) throw new Error(`Falha ao remover comentário: ${error.message}`);
   revalidatePath(ROUTES.video(videoId));
 }

@@ -43,7 +43,7 @@ export async function listWatchHistory(): Promise<Array<VideoCardData & { second
     .limit(50)
     .overrideTypes<Array<{ seconds_watched: number; completed: boolean; video: VideoCardRow | null }>>();
 
-  if (error) throw new Error(`Falha ao carregar historico: ${error.message}`);
+  if (error) throw new Error(`Falha ao carregar histórico: ${error.message}`);
 
   return (data ?? [])
     .filter((row): row is typeof row & { video: VideoCardRow } => Boolean(row.video))
@@ -66,6 +66,6 @@ export async function clearWatchHistory() {
   if (!user) return;
 
   const { error } = await supabase.from("video_progress").delete().eq("user_id", user.id);
-  if (error) throw new Error(`Falha ao limpar historico: ${error.message}`);
+  if (error) throw new Error(`Falha ao limpar histórico: ${error.message}`);
   revalidatePath(ROUTES.history);
 }

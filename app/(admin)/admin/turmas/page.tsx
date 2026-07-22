@@ -8,8 +8,8 @@ export default function AdminClassesPage() {
   return (
     <EmptyState
       icon={Construction}
-      title="Em construcao"
-      description="Turmas fechadas (uso institucional) nao fazem parte do MVP de marketplace aberto. Veja o ROADMAP.md."
+      title="Em construção"
+      description="Turmas fechadas (uso institucional) não fazem parte do MVP de marketplace aberto. Veja o ROADMAP.md."
     />
   );
 }

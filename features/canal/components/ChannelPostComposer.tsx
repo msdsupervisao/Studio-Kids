@@ -21,8 +21,8 @@ const KIND_OPTIONS: Array<{ kind: ChannelPostKind; label: string; icon: typeof I
   { kind: "image", label: "Imagem", icon: ImageIcon },
   { kind: "image_poll", label: "Sondagem de imagem", icon: Images },
   { kind: "poll", label: "Sondagem de texto", icon: BarChart3 },
-  { kind: "video", label: "Video", icon: VideoIcon },
-  { kind: "quiz", label: "Questionario", icon: FileQuestion },
+  { kind: "video", label: "Vídeo", icon: VideoIcon },
+  { kind: "quiz", label: "Questionário", icon: FileQuestion },
 ];
 
 type ImageSlot = { file: File | null; preview: string | null; caption: string };
@@ -69,7 +69,7 @@ export function ChannelPostComposer({
   function publish() {
     if (kind === "poll" || kind === "quiz") {
       if (options.filter((option) => option.trim()).length < 2) {
-        toast.error("Adicione ao menos 2 opcoes");
+        toast.error("Adicione ao menos 2 opções");
         return;
       }
     }
@@ -82,7 +82,7 @@ export function ChannelPostComposer({
       return;
     }
     if (kind === "video" && !selectedVideoId) {
-      toast.error("Selecione um video do canal");
+      toast.error("Selecione um vídeo do canal");
       return;
     }
     if (kind === "text" && !content.trim()) {
@@ -113,9 +113,9 @@ export function ChannelPostComposer({
       try {
         await createChannelPost(formData);
         reset();
-        toast.success(scheduleOpen && scheduledAt ? "Publicacao agendada" : "Publicado na comunidade do canal");
+        toast.success(scheduleOpen && scheduledAt ? "Publicação agendada" : "Publicado na comunidade do canal");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Nao foi possivel publicar");
+        toast.error(error instanceof Error ? error.message : "Não foi possível publicar");
       }
     });
   }
@@ -237,7 +237,7 @@ export function ChannelPostComposer({
               key={index}
               value={option}
               maxLength={120}
-              placeholder={`Opcao ${index + 1}`}
+              placeholder={`Opção ${index + 1}`}
               onChange={(event) =>
                 setOptions((current) => current.map((value, i) => (i === index ? event.target.value : value)))
               }
@@ -249,7 +249,7 @@ export function ChannelPostComposer({
               className="focus-ring text-xs font-medium text-primary hover:underline"
               onClick={() => setOptions((current) => [...current, ""])}
             >
-              Adicionar opcao
+              Adicionar opção
             </button>
           )}
         </div>
@@ -258,7 +258,7 @@ export function ChannelPostComposer({
       {kind === "video" && (
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
           {videos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Voce ainda nao tem videos publicados para compartilhar.</p>
+            <p className="text-sm text-muted-foreground">Você ainda não tem vídeos publicados para compartilhar.</p>
           ) : (
             videos.map((video) => (
               <button

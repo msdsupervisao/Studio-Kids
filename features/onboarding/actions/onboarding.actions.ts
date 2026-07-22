@@ -24,7 +24,7 @@ export async function completeOnboarding(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   if (role === "professor") {
     const parsedChannel = channelSchema.safeParse({
@@ -32,14 +32,14 @@ export async function completeOnboarding(
       slug: formData.get("channelSlug"),
     });
     if (!parsedChannel.success) {
-      return { error: parsedChannel.error.issues[0]?.message ?? "Dados do canal invalidos" };
+      return { error: parsedChannel.error.issues[0]?.message ?? "Dados do canal inválidos" };
     }
 
     const { error: roleError } = await supabase
       .from("profiles")
       .update({ role: "professor", onboarding_completed_at: new Date().toISOString() })
       .eq("id", user.id);
-    if (roleError) return { error: "Nao foi possivel concluir seu cadastro" };
+    if (roleError) return { error: "Não foi possível concluir seu cadastro" };
 
     const { error: channelError } = await supabase.from("channels").insert({
       owner_id: user.id,
@@ -47,15 +47,15 @@ export async function completeOnboarding(
       slug: parsedChannel.data.slug,
     });
     if (channelError) {
-      if (channelError.code === "23505") return { error: "Ja existe um canal com esse endereco" };
-      return { error: "Nao foi possivel criar seu canal" };
+      if (channelError.code === "23505") return { error: "Já existe um canal com esse endereço" };
+      return { error: "Não foi possível criar seu canal" };
     }
   } else {
     const { error } = await supabase
       .from("profiles")
       .update({ role: "student", onboarding_completed_at: new Date().toISOString() })
       .eq("id", user.id);
-    if (error) return { error: "Nao foi possivel concluir seu cadastro" };
+    if (error) return { error: "Não foi possível concluir seu cadastro" };
   }
 
   redirect(ROUTES.home);

@@ -69,7 +69,7 @@ export function SaveButton({
             para salvar em uma playlist.
           </p>
         ) : playlists.length === 0 ? (
-          <p className="px-2 py-3 text-sm text-muted-foreground">Voce ainda nao tem playlists.</p>
+          <p className="px-2 py-3 text-sm text-muted-foreground">Você ainda não tem playlists.</p>
         ) : (
           playlists.map((playlist) => (
             <DropdownMenuCheckboxItem

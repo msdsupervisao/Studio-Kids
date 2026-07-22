@@ -11,13 +11,13 @@ export function VideoRowActions({ videoId, videoTitle }: { videoId: string; vide
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
-    if (!confirm(`Remover "${videoTitle}"? Essa acao nao pode ser desfeita.`)) return;
+    if (!confirm(`Remover "${videoTitle}"? Essa ação não pode ser desfeita.`)) return;
     startTransition(async () => {
       try {
         await deleteVideo(videoId);
-        toast.success("Video removido");
+        toast.success("Vídeo removido");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao remover video");
+        toast.error(error instanceof Error ? error.message : "Falha ao remover vídeo");
       }
     });
   }

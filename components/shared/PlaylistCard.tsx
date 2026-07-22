@@ -27,12 +27,12 @@ export function PlaylistCard({ playlist }: { playlist: PlaylistWithVideos }) {
             <ListVideo className="h-3.5 w-3.5" />
             Playlist
           </span>
-          <span>{playlist.videosCount} videos</span>
+          <span>{playlist.videosCount} vídeos</span>
         </div>
       </div>
       <div>
         <h3 className="line-clamp-2 text-sm font-medium text-foreground">{playlist.title}</h3>
-        <p className="text-xs text-muted-foreground">{playlist.is_public ? "Publica" : "Privada"}</p>
+        <p className="text-xs text-muted-foreground">{playlist.is_public ? "Pública" : "Privada"}</p>
       </div>
     </Link>
   );

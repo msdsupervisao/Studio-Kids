@@ -6,11 +6,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import type { VideoStatus } from "@/types/video.types";
 
-export const metadata: Metadata = { title: "Status de aprovacao" };
+export const metadata: Metadata = { title: "Status de aprovação" };
 
 const STATUS_LABEL: Record<VideoStatus, { label: string; variant: "success" | "secondary" | "destructive" }> = {
   published: { label: "Aprovado", variant: "success" },
-  pending: { label: "Aguardando analise", variant: "secondary" },
+  pending: { label: "Aguardando análise", variant: "secondary" },
   draft: { label: "Rascunho", variant: "secondary" },
   rejected: { label: "Rejeitado", variant: "destructive" },
 };
@@ -23,14 +23,14 @@ export default async function ProfessorApprovalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Status de aprovacao</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Status de aprovação</h1>
         <p className="text-sm text-muted-foreground">
-          Acompanhe aqui a analise dos videos que ainda nao estao publicos.
+          Acompanhe aqui a análise dos vídeos que ainda não estão públicos.
         </p>
       </div>
 
       {videos.length === 0 ? (
-        <EmptyState icon={ClipboardCheck} title="Nada pendente" description="Todos os seus videos ja foram avaliados." />
+        <EmptyState icon={ClipboardCheck} title="Nada pendente" description="Todos os seus vídeos já foram avaliados." />
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border">
           {videos.map((video) => (

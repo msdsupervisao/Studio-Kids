@@ -3,7 +3,7 @@ import { Film, ShieldCheck, Tv, Users } from "lucide-react";
 import { createClient } from "@/services/supabase/server";
 import { StatsCards } from "@/features/estatisticas/components/StatsCards";
 
-export const metadata: Metadata = { title: "Administracao" };
+export const metadata: Metadata = { title: "Administração" };
 
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
@@ -18,13 +18,13 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Visao geral da plataforma</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Visão geral da plataforma</h1>
       <StatsCards
         items={[
-          { label: "Usuarios", value: usersCount ?? 0, icon: Users },
+          { label: "Usuários", value: usersCount ?? 0, icon: Users },
           { label: "Canais", value: channelsCount ?? 0, icon: Tv },
-          { label: "Videos publicados", value: videosCount ?? 0, icon: Film },
-          { label: "Aguardando moderacao", value: pendingCount ?? 0, icon: ShieldCheck },
+          { label: "Vídeos publicados", value: videosCount ?? 0, icon: Film },
+          { label: "Aguardando moderação", value: pendingCount ?? 0, icon: ShieldCheck },
         ]}
       />
     </div>

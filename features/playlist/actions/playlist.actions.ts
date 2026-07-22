@@ -88,14 +88,14 @@ export async function createPlaylist(
     isPublic: formData.get("isPublic") === "on",
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sessao expirada. Faca login novamente." };
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   const { error } = await supabase.from("playlists").insert({
     owner_id: user.id,
@@ -104,7 +104,7 @@ export async function createPlaylist(
     is_public: parsed.data.isPublic,
   });
 
-  if (error) return { error: "Nao foi possivel criar a playlist" };
+  if (error) return { error: "Não foi possível criar a playlist" };
 
   revalidatePath(ROUTES.playlists);
   redirect(ROUTES.playlists);
@@ -148,7 +148,7 @@ export async function addVideoToPlaylist(playlistId: string, videoId: string) {
   const { error } = await supabase
     .from("playlist_videos")
     .insert({ playlist_id: playlistId, video_id: videoId, position: count ?? 0 });
-  if (error) throw new Error(`Falha ao adicionar video a playlist: ${error.message}`);
+  if (error) throw new Error(`Falha ao adicionar vídeo à playlist: ${error.message}`);
   revalidatePath(ROUTES.playlists);
 }
 
@@ -159,7 +159,7 @@ export async function removeVideoFromPlaylist(playlistId: string, videoId: strin
     .delete()
     .eq("playlist_id", playlistId)
     .eq("video_id", videoId);
-  if (error) throw new Error(`Falha ao remover video da playlist: ${error.message}`);
+  if (error) throw new Error(`Falha ao remover vídeo da playlist: ${error.message}`);
   revalidatePath(ROUTES.playlists);
 }
 
