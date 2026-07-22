@@ -95,15 +95,15 @@ export function Topbar({
         <span className="hidden text-base font-semibold tracking-tight sm:inline">{APP_NAME}</span>
       </Link>
 
-      <form onSubmit={handleSearch} className="mx-auto flex w-full max-w-xl items-center">
-        <div className="flex w-full">
+      <form onSubmit={handleSearch} className="mx-auto flex w-full min-w-0 max-w-xl items-center">
+        <div className="flex w-full min-w-0">
           <Input
             name="q"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Pesquisar aulas, canais..."
             aria-label="Pesquisar"
-            className="rounded-l-full rounded-r-none border-r-0 focus-visible:z-10"
+            className="min-w-0 rounded-l-full rounded-r-none border-r-0 focus-visible:z-10"
           />
           <button
             type="submit"
