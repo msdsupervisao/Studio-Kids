@@ -14,8 +14,15 @@ const initialState: OnboardingState = {};
 
 export function OnboardingWizard({ fullName }: { fullName: string }) {
   const [role, setRole] = useState<Extract<UserRole, "student" | "professor"> | null>(null);
+  const [wantsChannel, setWantsChannel] = useState(false);
   const [channelName, setChannelName] = useState(`Canal de ${fullName.split(" ")[0]}`);
   const [state, action, pending] = useActionState(completeOnboarding, initialState);
+
+  // Criar canal exige as mesmas permissoes de professor no resto do app
+  // (upload, area do professor) — por isso quem marca a opcao extra em
+  // "Quero aprender" tambem e cadastrado como professor por baixo dos panos.
+  const showChannelFields = role === "professor" || wantsChannel;
+  const submittedRole = showChannelFields ? "professor" : role;
 
   return (
     <div className="w-full max-w-lg space-y-6">
@@ -57,9 +64,21 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
 
       {role && (
         <form action={action} className="space-y-4">
-          <input type="hidden" name="role" value={role} />
+          <input type="hidden" name="role" value={submittedRole ?? role} />
 
-          {role === "professor" && (
+          {role === "student" && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={wantsChannel}
+                onChange={(event) => setWantsChannel(event.target.checked)}
+                className="h-4 w-4 rounded border-input"
+              />
+              Também quero criar um canal para publicar vídeos
+            </label>
+          )}
+
+          {showChannelFields && (
             <div className="space-y-4 rounded-xl border border-border p-4">
               <div className="space-y-1.5">
                 <Label htmlFor="channelName">Nome do canal</Label>
