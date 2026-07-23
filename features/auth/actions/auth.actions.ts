@@ -44,12 +44,14 @@ export async function signIn(_prevState: AuthActionState, formData: FormData): P
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
+  // O cadastro sempre salva o nome de usuario em minusculas (sanitizeUsername
+  // no client), mas nada garante que a pessoa digite do mesmo jeito ao
+  // entrar de novo — "14Duck" e "14duck" tem que logar na mesma conta.
   // "@" no campo => conta antiga, criada com e-mail real, antes da
   // migracao para login por usuario. Sem "@" => nome de usuario, do qual
   // derivamos o e-mail interno gerado no cadastro.
-  const email = parsed.data.identifier.includes("@")
-    ? parsed.data.identifier
-    : usernameToAuthEmail(parsed.data.identifier);
+  const identifier = parsed.data.identifier.trim().toLowerCase();
+  const email = identifier.includes("@") ? identifier : usernameToAuthEmail(identifier);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password: parsed.data.password });
