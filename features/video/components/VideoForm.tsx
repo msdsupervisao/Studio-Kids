@@ -131,7 +131,7 @@ export function VideoForm({
           id="title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Ex: Introducao a Derivadas"
+          placeholder="Ex: Introdução a Derivadas"
           required
           maxLength={150}
         />
