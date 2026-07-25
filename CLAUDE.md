@@ -26,6 +26,13 @@ O dono deste projeto ja autorizou expressamente: **nao pergunte antes de agir**.
 - Rodar servidor de debug com `npm run dev` (cai na porta 3001, ja que a 3000 costuma estar ocupada pelo processo do proprio usuario) e sempre encerrar o processo ao terminar de testar.
 - Nunca digitar a senha real do usuario em nenhum campo, mesmo que ele cole no chat — pedir para ele digitar.
 
+## Testes automatizados
+
+- `npm test` — Vitest (unit em `utils/`/`lib/validations.ts` + integracao das Server Actions criticas com Supabase mockado via `test/supabase-mock.ts`). Rapido, sem depender de rede.
+- `npm run test:e2e` — Playwright (`e2e/golden-path.spec.ts`), roda contra o Supabase real do projeto (nao ha ambiente de teste separado) e sobe o `next dev` na porta 3001 sozinho. E pulado automaticamente se `SUPABASE_SERVICE_ROLE_KEY` nao estiver no `.env.local`.
+- Contas descartaveis do e2e seguem a mesma regra da secao acima (criar/promover/apagar via service role em `e2e/helpers/test-account.ts`) — a service role so faz bootstrap de ambiente, a logica testada (cadastro, upload, moderacao) sempre roda pela UI de verdade.
+- **Achado (2026-07-24):** a migration `0005_security_hardening.sql` adicionou um trigger `protect_profile_privileges` (BEFORE UPDATE em `profiles`) que so aceita mudanca de `role` vinda de quem ja e admin. Isso quebrou a instrucao do README de promover a primeira conta a admin via `UPDATE ... SET role = 'admin'` no SQL Editor — esse UPDATE cai no mesmo trigger e falha com "Somente administradores podem alterar papeis", mesmo rodando como superusuario (o trigger depende de `auth.uid()`, que e nulo fora de uma request autenticada). Hoje o unico jeito de promover alguem e ja estar logado como um admin existente e usar `/admin/usuarios`. O helper de e2e contorna isso apagando e reinserindo a linha do profile (o trigger e so BEFORE UPDATE, nao pega INSERT) — so serve para bootstrap de conta de teste, nunca usar esse truque para promover uma conta real. Vale atualizar o README ou adicionar um bootstrap alternativo (ex: RPC `security definer` para o primeiro admin) quando sobrar tempo.
+
 ## Deploy
 
 - `git push origin main` aciona deploy automatico no Vercel (sem etapa manual). Ambiente de producao: `https://studio-kids-seven.vercel.app`.

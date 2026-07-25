@@ -59,7 +59,7 @@ Status honesto do que existe hoje no codigo, nao uma lista de aspiracoes. ✅ = 
 - ✅ Checklist (este arquivo)
 - ✅ Roadmap (`docs/ROADMAP.md`)
 - 🟡 Plano de implantacao — passo a passo de setup local no README; nao ha pipeline de CI/CD configurado neste repo
-- ⬜ Plano de testes formal — nenhum teste automatizado existe ainda (ver ROADMAP Fase 1); a validacao desta iteracao foi build + typecheck + lint + smoke test manual do servidor
+- ✅ Plano de testes formal — Vitest (unit em `utils/`/`lib/validations.ts`, integracao das Server Actions criticas com Supabase mockado) + Playwright (e2e do fluxo cadastro → upload → aprovacao → assistir, contra o Supabase real do projeto). `npm test` / `npm run test:e2e`
 - ✅ Plano de manutencao — implicito na separacao de camadas (services/ isola SDKs externos, trocar Supabase ou provedor de IA nao exige tocar em features)
 - ✅ Proximas evolucoes (`docs/ROADMAP.md`)
 

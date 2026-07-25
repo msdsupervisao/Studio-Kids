@@ -11,7 +11,7 @@ Prioridade alta, esforco relativamente baixo — completa o que a Fase 0 deixou 
 - [ ] Deduplicar contagem de visualizacoes por usuario/sessao usando `video_progress` (hoje incrementa a cada page load).
 - [ ] Upload direto ao Storage via signed URL + XHR, com progresso real por porcentagem de bytes (hoje e "por fase").
 - [ ] "Continuar assistindo" na home usando `video_progress.seconds_watched`.
-- [ ] Testes automatizados: unit para `utils/` e `lib/validations.ts`, integracao para as Server Actions criticas (upload, moderacao, assinatura), e2e do fluxo cadastro → upload → aprovacao → assistir.
+- [x] Testes automatizados: unit para `utils/` e `lib/validations.ts` (Vitest), integracao para as Server Actions criticas — upload, moderacao, assinatura — com Supabase mockado (Vitest), e2e do fluxo cadastro → upload → aprovacao → assistir (Playwright, contra o Supabase real do projeto). Ver `npm test` / `npm run test:e2e` e CLAUDE.md para a politica de contas descartaveis.
 - [ ] Atualizar `next` assim que uma versao corrigir o CVE moderado de `postcss` interno (ver Documento Tecnico, secao 5).
 
 ## Fase 2 — Engajamento e descoberta
