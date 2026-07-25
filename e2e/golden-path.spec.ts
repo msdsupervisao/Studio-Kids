@@ -3,10 +3,17 @@ import { expect, test, type Browser } from "@playwright/test";
 import {
   createDisposableAccount,
   deleteDisposableAccount,
+  deleteStorageObjects,
   getUserIdByUsername,
+  getVideoStoragePaths,
   hasServiceRole,
   promoteToAdmin,
 } from "./helpers/test-account";
+
+// Espelha lib/constants.ts (STORAGE_BUCKETS) — evita depender do alias
+// "@/" resolver no runtime de teste do Playwright.
+const VIDEOS_BUCKET = "videos";
+const THUMBNAILS_BUCKET = "thumbnails";
 
 const FIXTURE_VIDEO = path.resolve(__dirname, "fixtures/sample-video.mp4");
 
@@ -45,6 +52,16 @@ test.describe("cadastro → upload → aprovação → assistir", () => {
   });
 
   test.afterAll(async () => {
+    // Busca os paths reais no Storage ANTES de apagar a conta — a cascata
+    // do banco some com a linha de `videos`, mas nao com o arquivo no
+    // bucket, entao precisa apagar o objeto separadamente enquanto a
+    // linha ainda existe para consultar o path.
+    if (videoId) {
+      const paths = await getVideoStoragePaths(videoId);
+      if (paths?.videoPath) await deleteStorageObjects(VIDEOS_BUCKET, [paths.videoPath]);
+      if (paths?.thumbnailPath) await deleteStorageObjects(THUMBNAILS_BUCKET, [paths.thumbnailPath]);
+    }
+
     if (adminUserId) await deleteDisposableAccount(adminUserId);
     if (!professorUserId) professorUserId = await getUserIdByUsername(professorUsername);
     if (professorUserId) await deleteDisposableAccount(professorUserId);

@@ -32,7 +32,15 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: "list",
-  timeout: 60_000,
+  // beforeAll/afterAll usam esse timeout (test.setTimeout no corpo do teste
+  // so cobre o teste em si) — com varias chamadas REST sequenciais no
+  // cleanup contra o Supabase real, 60s por hook e curto demais.
+  timeout: 120_000,
+  // Contra o Supabase real (sem ambiente de teste dedicado), auth/signup
+  // pode responder bem mais devagar que os 5s padrao do Playwright,
+  // sobretudo em execucoes seguidas — o form fica em "Criando conta..."
+  // pendente, nao e erro. 15s da folga sem mascarar uma falha de verdade.
+  expect: { timeout: 15_000 },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3001",
     trace: "retain-on-failure",

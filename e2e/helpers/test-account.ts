@@ -13,12 +13,21 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const hasServiceRole = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
 
+// Contra o Supabase real, uma chamada admin lenta nao pode travar o
+// afterAll ate o timeout do proprio Playwright (60s) — trava mais curto
+// e cedo aqui para falhar rapido em vez de pendurar a suite inteira.
+const REQUEST_TIMEOUT_MS = 20_000;
+
 function adminHeaders() {
   return {
     apikey: SERVICE_ROLE_KEY as string,
     Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
     "Content-Type": "application/json",
   };
+}
+
+function adminFetch(url: string, init: RequestInit = {}) {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
 }
 
 export function usernameToAuthEmail(username: string): string {
@@ -39,7 +48,7 @@ export async function createDisposableAccount(options: {
   password: string;
 }): Promise<DisposableAccount> {
   const email = usernameToAuthEmail(options.username);
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+  const response = await adminFetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
     method: "POST",
     headers: adminHeaders(),
     body: JSON.stringify({
@@ -74,7 +83,7 @@ export async function createDisposableAccount(options: {
  * desatualizada.
  */
 export async function promoteToAdmin(userId: string): Promise<void> {
-  const getResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
+  const getResponse = await adminFetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
     headers: adminHeaders(),
   });
   if (!getResponse.ok) {
@@ -83,7 +92,7 @@ export async function promoteToAdmin(userId: string): Promise<void> {
   const [profile] = (await getResponse.json()) as Array<Record<string, unknown>>;
   if (!profile) throw new Error(`Perfil ${userId} não encontrado para promover a admin`);
 
-  const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+  const deleteResponse = await adminFetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
     method: "DELETE",
     headers: { ...adminHeaders(), Prefer: "return=minimal" },
   });
@@ -91,7 +100,7 @@ export async function promoteToAdmin(userId: string): Promise<void> {
     throw new Error(`Falha ao remover perfil temporariamente (${deleteResponse.status}): ${await deleteResponse.text()}`);
   }
 
-  const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+  const insertResponse = await adminFetch(`${SUPABASE_URL}/rest/v1/profiles`, {
     method: "POST",
     headers: { ...adminHeaders(), Prefer: "return=minimal" },
     body: JSON.stringify({ ...profile, role: "admin", onboarding_completed_at: new Date().toISOString() }),
@@ -103,18 +112,51 @@ export async function promoteToAdmin(userId: string): Promise<void> {
 
 /** Busca o id de uma conta criada pelo próprio fluxo de cadastro da UI (não via REST), para poder limpar depois. */
 export async function getUserIdByUsername(username: string): Promise<string | null> {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${username}&select=id`, {
-    headers: adminHeaders(),
-  });
-  if (!response.ok) return null;
-  const rows = (await response.json()) as Array<{ id: string }>;
-  return rows[0]?.id ?? null;
+  try {
+    const response = await adminFetch(`${SUPABASE_URL}/rest/v1/profiles?username=eq.${username}&select=id`, {
+      headers: adminHeaders(),
+    });
+    if (!response.ok) return null;
+    const rows = (await response.json()) as Array<{ id: string }>;
+    return rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
-/** Apaga a conta descartável — cascata apaga profile, canais e vídeos associados. */
+/** Apaga a conta descartável — cascata apaga profile, canais e vídeos associados (as linhas, não os arquivos no Storage). */
 export async function deleteDisposableAccount(userId: string): Promise<void> {
-  await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+  await adminFetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
     method: "DELETE",
     headers: adminHeaders(),
+  }).catch(() => {});
+}
+
+/** Paths reais gravados pelo upload (podem ter extensão diferente do arquivo original, ver finalizeVideoUpload). */
+export async function getVideoStoragePaths(
+  videoId: string
+): Promise<{ videoPath: string | null; thumbnailPath: string | null } | null> {
+  try {
+    const response = await adminFetch(
+      `${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}&select=video_path,thumbnail_path`,
+      { headers: adminHeaders() }
+    );
+    if (!response.ok) return null;
+    const [row] = (await response.json()) as Array<{ video_path: string | null; thumbnail_path: string | null }>;
+    if (!row) return null;
+    return { videoPath: row.video_path, thumbnailPath: row.thumbnail_path };
+  } catch {
+    return null;
+  }
+}
+
+/** Apaga objetos de um bucket do Storage — usado para limpar o vídeo de teste, que a cascata do banco não alcança. */
+export async function deleteStorageObjects(bucket: string, paths: string[]): Promise<void> {
+  const prefixes = paths.filter(Boolean);
+  if (prefixes.length === 0) return;
+  await adminFetch(`${SUPABASE_URL}/storage/v1/object/${bucket}`, {
+    method: "DELETE",
+    headers: adminHeaders(),
+    body: JSON.stringify({ prefixes }),
   }).catch(() => {});
 }
