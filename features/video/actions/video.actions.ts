@@ -116,10 +116,10 @@ export async function listPendingVideos() {
 
   const { data, error } = await supabase
     .from("videos")
-    .select(`${VIDEO_CARD_SELECT}, status`)
+    .select(`${VIDEO_CARD_SELECT}, status, video_path`)
     .eq("status", "pending")
     .order("created_at", { ascending: true })
-    .overrideTypes<Array<VideoCardRow & { status: VideoStatus }>>();
+    .overrideTypes<Array<VideoCardRow & { status: VideoStatus; video_path: string }>>();
 
   if (error) throw new Error(`Falha ao carregar vídeos pendentes: ${error.message}`);
   return (data ?? []).map((row) => ({
@@ -129,6 +129,11 @@ export async function listPendingVideos() {
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
     ),
     status: row.status,
+    // O upload grava o arquivo em duas etapas (rascunho -> envio ao Storage
+    // -> finalizeVideoUpload grava o path); se o navegador fechar ou a
+    // conexao cair no meio, sobra um registro "pendente" sem arquivo de
+    // verdade. Sinaliza pro admin em vez de deixar aprovar um video mudo.
+    hasFile: row.video_path !== "",
   }));
 }
 
@@ -294,6 +299,13 @@ export async function updateVideoStatus(videoId: string, status: VideoStatus, re
   if (!user) throw new Error("Sessão expirada. Faça login novamente.");
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
   if (roleError || !isAdmin) throw new Error("Apenas administradores podem moderar vídeos.");
+
+  if (parsed.data.status === "published") {
+    const { data: video } = await supabase.from("videos").select("video_path").eq("id", videoId).single();
+    if (!video?.video_path) {
+      throw new Error("Este vídeo não tem arquivo enviado (upload incompleto) e não pode ser publicado.");
+    }
+  }
 
   const { error } = await supabase
     .from("videos")

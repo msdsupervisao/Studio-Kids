@@ -143,11 +143,22 @@ describe("updateVideoStatus (moderação)", () => {
     );
   });
 
+  it("recusa publicar um vídeo sem arquivo enviado (upload incompleto)", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    client.from.mockReturnValueOnce(queryResult({ data: { video_path: "" } }));
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(updateVideoStatus(VIDEO_ID, "published")).rejects.toThrow("upload incompleto");
+  });
+
   it("aprova o vídeo (define published_at, limpa rejection_reason)", async () => {
     const client = createMockSupabaseClient({ id: "admin-1" });
     client.rpc.mockResolvedValue({ data: true, error: null });
     const update = vi.fn().mockReturnValue(queryResult({ error: null }));
-    client.from.mockReturnValueOnce({ update } as never);
+    client.from
+      .mockReturnValueOnce(queryResult({ data: { video_path: "chan/video.mp4" } }))
+      .mockReturnValueOnce({ update } as never);
     vi.mocked(createClient).mockResolvedValue(client as never);
 
     await updateVideoStatus(VIDEO_ID, "published");
@@ -174,7 +185,9 @@ describe("updateVideoStatus (moderação)", () => {
   it("propaga erro do banco ao atualizar status", async () => {
     const client = createMockSupabaseClient({ id: "admin-1" });
     client.rpc.mockResolvedValue({ data: true, error: null });
-    client.from.mockReturnValueOnce(queryResult({ error: { message: "linha bloqueada" } }));
+    client.from
+      .mockReturnValueOnce(queryResult({ data: { video_path: "chan/video.mp4" } }))
+      .mockReturnValueOnce(queryResult({ error: { message: "linha bloqueada" } }));
     vi.mocked(createClient).mockResolvedValue(client as never);
 
     await expect(updateVideoStatus(VIDEO_ID, "published")).rejects.toThrow("Falha ao atualizar status do vídeo");

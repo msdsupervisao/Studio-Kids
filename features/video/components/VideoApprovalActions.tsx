@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { updateVideoStatus } from "@/features/video/actions/video.actions";
 
-export function VideoApprovalActions({ videoId }: { videoId: string }) {
+export function VideoApprovalActions({ videoId, hasFile = true }: { videoId: string; hasFile?: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   function approve() {
@@ -35,7 +35,13 @@ export function VideoApprovalActions({ videoId }: { videoId: string }) {
 
   return (
     <div className="flex gap-2">
-      <Button size="sm" onClick={approve} disabled={isPending} className="gap-1">
+      <Button
+        size="sm"
+        onClick={approve}
+        disabled={isPending || !hasFile}
+        title={hasFile ? undefined : "Upload incompleto — não há arquivo de vídeo para publicar"}
+        className="gap-1"
+      >
         <Check className="h-4 w-4" /> Aprovar
       </Button>
       <Button size="sm" variant="outline" onClick={reject} disabled={isPending} className="gap-1">
