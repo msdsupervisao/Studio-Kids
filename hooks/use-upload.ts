@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/services/supabase/client";
@@ -23,6 +23,20 @@ export function useUpload(targetPlaylistId?: string) {
   const [phase, setPhase] = useState<UploadPhase>("idle");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const isSubmitting = phase === "compressing" || phase === "sending";
+
+  // Fechar a aba no meio do envio deixa um registro de video "pendente"
+  // sem arquivo nenhum no Storage (o rascunho ja foi criado, o upload do
+  // arquivo em si e que fica pela metade) — avisa antes de sair.
+  useEffect(() => {
+    if (!isSubmitting) return;
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSubmitting]);
 
   async function submit(input: UploadVideoInput) {
     setPhase("compressing");
@@ -84,5 +98,5 @@ export function useUpload(targetPlaylistId?: string) {
     }
   }
 
-  return { phase, progress, error, submit, isSubmitting: phase === "compressing" || phase === "sending" };
+  return { phase, progress, error, submit, isSubmitting };
 }

@@ -1,4 +1,5 @@
 import type { FFmpeg } from "@ffmpeg/ffmpeg";
+import { withTimeout } from "@/utils/with-timeout";
 
 const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
@@ -34,22 +35,6 @@ async function loadFFmpeg(): Promise<FFmpeg> {
     });
   }
   return ffmpegPromise;
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        clearTimeout(timer);
-        reject(error);
-      }
-    );
-  });
 }
 
 function isAlreadyCompact(file: File, durationSeconds: number): boolean {

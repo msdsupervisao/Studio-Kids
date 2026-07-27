@@ -187,7 +187,9 @@ export function VideoForm({
       <p className="text-center text-xs text-muted-foreground">
         {phase === "compressing"
           ? "Reduzindo o tamanho do vídeo no seu navegador antes do envio — isso pode levar alguns minutos."
-          : "Seu vídeo ficará visível após a aprovação da nossa equipe."}
+          : phase === "sending"
+            ? "Enviando o arquivo para o servidor — não feche nem atualize esta aba até terminar."
+            : "Seu vídeo ficará visível após a aprovação da nossa equipe."}
       </p>
     </form>
   );
