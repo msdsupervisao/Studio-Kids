@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
-import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import {
+  VIDEO_CARD_SELECT,
+  getLikesCountMap,
+  toVideoCardData,
+  type VideoCardRow,
+} from "@/features/video/lib/video-card.mapper";
 import type { VideoCardData } from "@/types/video.types";
 
 export async function upsertVideoProgress(videoId: string, secondsWatched: number, completed: boolean) {
@@ -45,17 +50,19 @@ export async function listWatchHistory(): Promise<Array<VideoCardData & { second
 
   if (error) throw new Error(`Falha ao carregar histórico: ${error.message}`);
 
-  return (data ?? [])
-    .filter((row): row is typeof row & { video: VideoCardRow } => Boolean(row.video))
-    .map((row) => ({
-      ...toVideoCardData(
-        row.video,
-        (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-        (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
-      ),
-      secondsWatched: row.seconds_watched,
-      completed: row.completed,
-    }));
+  const rows = (data ?? []).filter((row): row is typeof row & { video: VideoCardRow } => Boolean(row.video));
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.video.id));
+
+  return rows.map((row) => ({
+    ...toVideoCardData(
+      row.video,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.video.id) ?? 0
+    ),
+    secondsWatched: row.seconds_watched,
+    completed: row.completed,
+  }));
 }
 
 export async function clearWatchHistory() {

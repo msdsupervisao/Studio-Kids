@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCompactNumber, formatDuration, formatRelativeDate, formatViews } from "@/utils/format";
+import { formatCompactNumber, formatDuration, formatLikes, formatRelativeDate, formatViews } from "@/utils/format";
 
 // Intl usa espaço nao-quebravel (U+00A0) entre numero e unidade — monta a
 // partir do code point para nao depender de um caractere invisivel no fonte.
@@ -45,6 +45,17 @@ describe("formatViews", () => {
   it("usa plural para 0 ou mais de 1 visualização", () => {
     expect(formatViews(0)).toBe("0 visualizacoes");
     expect(formatViews(2)).toBe("2 visualizacoes");
+  });
+});
+
+describe("formatLikes", () => {
+  it("usa singular para exatamente 1 curtida", () => {
+    expect(formatLikes(1)).toBe("1 curtida");
+  });
+
+  it("usa plural para 0 ou mais de 1 curtida", () => {
+    expect(formatLikes(0)).toBe("0 curtidas");
+    expect(formatLikes(12)).toBe("12 curtidas");
   });
 });
 

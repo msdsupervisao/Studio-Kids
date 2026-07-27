@@ -6,7 +6,7 @@ import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { sanitizeMultilineText } from "@/utils/sanitize";
 import { ROUTES, STORAGE_BUCKETS, UPLOAD_LIMITS } from "@/lib/constants";
-import { toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import { getLikesCountMap, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
 import type { ChannelPostKind, ChannelPostStatus } from "@/types/database.types";
 import type { VideoCardData } from "@/types/video.types";
 
@@ -77,7 +77,11 @@ export async function listChannelPosts(channelId: string, options: { forOwner?: 
     throw new Error(`Falha ao carregar comunicados: ${error.message}`);
   }
 
-  return (data ?? []).map((post) => ({
+  const posts = data ?? [];
+  const videoIds = posts.filter((post) => post.video).map((post) => post.video!.id);
+  const likesByVideo = await getLikesCountMap(supabase, videoIds);
+
+  return posts.map((post) => ({
     id: post.id,
     channelId: post.channel_id,
     authorId: post.author_id,
@@ -90,7 +94,8 @@ export async function listChannelPosts(channelId: string, options: { forOwner?: 
       ? toVideoCardData(
           post.video,
           (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-          (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+          (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+          likesByVideo.get(post.video.id) ?? 0
         )
       : null,
     status: post.status,

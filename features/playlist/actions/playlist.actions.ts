@@ -7,6 +7,7 @@ import { createStorageService } from "@/services/storage/storage.service";
 import { playlistSchema } from "@/lib/validations";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
 import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
+import { getLikesCountMap } from "@/features/video/lib/video-card.mapper";
 import type { PlaylistWithVideos } from "@/types/playlist.types";
 import type { VideoCardData } from "@/types/video.types";
 
@@ -177,24 +178,27 @@ export async function getPlaylistWithVideos(playlistId: string): Promise<Playlis
 
   if (error || !data) return null;
 
-  const videos = (data.playlist_videos ?? [])
+  const playlistVideos = (data.playlist_videos ?? [])
     .sort((a, b) => a.position - b.position)
     .map((entry) => entry.video)
-    .filter((video): video is NonNullable<typeof video> => Boolean(video))
-    .map((video) => ({
-      id: video.id,
-      slug: video.slug,
-      title: video.title,
-      thumbnailUrl: storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, video.thumbnail_path),
-      durationSeconds: video.duration_seconds,
-      viewsCount: video.views_count,
-      publishedAt: video.published_at,
-      channel: {
-        slug: video.channel?.slug ?? "",
-        name: video.channel?.name ?? "Canal removido",
-        avatarUrl: video.channel?.avatar_url ?? null,
-      },
-    }));
+    .filter((video): video is NonNullable<typeof video> => Boolean(video));
+  const likesByVideo = await getLikesCountMap(supabase, playlistVideos.map((video) => video.id));
+
+  const videos = playlistVideos.map((video) => ({
+    id: video.id,
+    slug: video.slug,
+    title: video.title,
+    thumbnailUrl: storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, video.thumbnail_path),
+    durationSeconds: video.duration_seconds,
+    viewsCount: video.views_count,
+    likesCount: likesByVideo.get(video.id) ?? 0,
+    publishedAt: video.published_at,
+    channel: {
+      slug: video.channel?.slug ?? "",
+      name: video.channel?.name ?? "Canal removido",
+      avatarUrl: video.channel?.avatar_url ?? null,
+    },
+  }));
 
   return { ...data, videos, videosCount: videos.length };
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROUTES } from "@/lib/constants";
-import { formatDuration, formatRelativeDate, formatViews } from "@/utils/format";
+import { formatDuration, formatLikes, formatRelativeDate, formatViews } from "@/utils/format";
 import type { VideoCardData } from "@/types/video.types";
 
 export function VideoCard({ video, editHref }: { video: VideoCardData; editHref?: string }) {
@@ -59,6 +59,7 @@ export function VideoCard({ video, editHref }: { video: VideoCardData; editHref?
           </Link>
           <p className="text-xs text-muted-foreground">
             {formatViews(video.viewsCount)}
+            {video.likesCount > 0 && <> · {formatLikes(video.likesCount)}</>}
             {video.publishedAt && <> · {formatRelativeDate(video.publishedAt)}</>}
           </p>
         </div>

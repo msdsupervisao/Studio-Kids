@@ -7,7 +7,12 @@ import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
 import { slugify } from "@/utils/slug";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
 import { createDraftVideoSchema, updateVideoSchema, videoModerationSchema } from "@/lib/validations";
-import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import {
+  VIDEO_CARD_SELECT,
+  getLikesCountMap,
+  toVideoCardData,
+  type VideoCardRow,
+} from "@/features/video/lib/video-card.mapper";
 import type { VideoPlaybackData, VideoStatus } from "@/types/video.types";
 
 export async function listPublishedVideos(options: { limit?: number; categorySlug?: string } = {}) {
@@ -36,11 +41,15 @@ export async function listPublishedVideos(options: { limit?: number; categorySlu
   const { data, error } = await query.overrideTypes<VideoCardRow[]>();
   if (error) throw new Error(`Falha ao carregar vídeos: ${error.message}`);
 
-  return (data ?? []).map((row) =>
+  const rows = data ?? [];
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.id));
+
+  return rows.map((row) =>
     toVideoCardData(
       row,
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.id) ?? 0
     )
   );
 }
@@ -61,11 +70,14 @@ export async function searchVideos(query: string) {
     .overrideTypes<VideoCardRow[]>();
 
   if (error) throw new Error(`Falha na busca: ${error.message}`);
-  return (data ?? []).map((row) =>
+  const rows = data ?? [];
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.id));
+  return rows.map((row) =>
     toVideoCardData(
       row,
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.id) ?? 0
     )
   );
 }
@@ -84,11 +96,14 @@ export async function listVideosByChannel(channelId: string) {
     .overrideTypes<Array<VideoCardRow & { status: VideoStatus; is_short: boolean }>>();
 
   if (error) throw new Error(`Falha ao carregar vídeos do canal: ${error.message}`);
-  return (data ?? []).map((row) => ({
+  const rows = data ?? [];
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.id));
+  return rows.map((row) => ({
     ...toVideoCardData(
       row,
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.id) ?? 0
     ),
     status: row.status,
     isShort: row.is_short,
@@ -185,11 +200,14 @@ export async function getRelatedVideos(videoId: string, channelId: string) {
     .overrideTypes<VideoCardRow[]>();
 
   if (error) throw new Error(`Falha ao carregar vídeos relacionados: ${error.message}`);
-  return (data ?? []).map((row) =>
+  const rows = data ?? [];
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.id));
+  return rows.map((row) =>
     toVideoCardData(
       row,
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.id) ?? 0
     )
   );
 }

@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
-import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import {
+  VIDEO_CARD_SELECT,
+  getLikesCountMap,
+  toVideoCardData,
+  type VideoCardRow,
+} from "@/features/video/lib/video-card.mapper";
 import type { VideoCardData } from "@/types/video.types";
 
 export async function isInWatchLater(videoId: string): Promise<boolean> {
@@ -65,13 +70,17 @@ export async function listWatchLater(): Promise<VideoCardData[]> {
 
   if (error) throw new Error(`Falha ao carregar lista: ${error.message}`);
 
-  return (data ?? [])
+  const videos = (data ?? [])
     .filter((row): row is typeof row & { video: VideoCardRow } => Boolean(row.video))
-    .map((row) =>
-      toVideoCardData(
-        row.video,
-        (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-        (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
-      )
-    );
+    .map((row) => row.video);
+  const likesByVideo = await getLikesCountMap(supabase, videos.map((video) => video.id));
+
+  return videos.map((video) =>
+    toVideoCardData(
+      video,
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(video.id) ?? 0
+    )
+  );
 }

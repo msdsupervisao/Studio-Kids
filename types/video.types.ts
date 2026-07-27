@@ -15,6 +15,7 @@ export interface VideoCardData {
   thumbnailUrl: string | null;
   durationSeconds: number;
   viewsCount: number;
+  likesCount: number;
   publishedAt: string | null;
   channel: {
     slug: string;

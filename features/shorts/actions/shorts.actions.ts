@@ -3,7 +3,12 @@
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
 import { STORAGE_BUCKETS } from "@/lib/constants";
-import { VIDEO_CARD_SELECT, toVideoCardData, type VideoCardRow } from "@/features/video/lib/video-card.mapper";
+import {
+  VIDEO_CARD_SELECT,
+  getLikesCountMap,
+  toVideoCardData,
+  type VideoCardRow,
+} from "@/features/video/lib/video-card.mapper";
 import type { VideoCardData } from "@/types/video.types";
 import type { VideoReactionType } from "@/types/database.types";
 
@@ -22,11 +27,14 @@ export async function listShorts(limit = 12): Promise<VideoCardData[]> {
     .overrideTypes<VideoCardRow[]>();
 
   if (error) throw new Error(`Falha ao carregar shorts: ${error.message}`);
-  return (data ?? []).map((row) =>
+  const rows = data ?? [];
+  const likesByVideo = await getLikesCountMap(supabase, rows.map((row) => row.id));
+  return rows.map((row) =>
     toVideoCardData(
       row,
       (path) => storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, path),
-      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path)
+      (path) => storage.getPublicUrl(STORAGE_BUCKETS.avatars, path),
+      likesByVideo.get(row.id) ?? 0
     )
   );
 }

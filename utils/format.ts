@@ -19,6 +19,10 @@ export function formatViews(value: number): string {
   return `${formatCompactNumber(value)} ${value === 1 ? "visualizacao" : "visualizacoes"}`;
 }
 
+export function formatLikes(value: number): string {
+  return `${formatCompactNumber(value)} ${value === 1 ? "curtida" : "curtidas"}`;
+}
+
 export function formatRelativeDate(isoDate: string): string {
   const date = new Date(isoDate);
   const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
