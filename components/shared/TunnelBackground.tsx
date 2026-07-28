@@ -73,9 +73,13 @@ export function TunnelBackground() {
     const camera = new THREE.PerspectiveCamera(45, 1, 1, 1000);
     camera.position.set(0, 0, 0);
 
+    // Sem antialias: agora que o tunel ocupa a coluna inteira (bem mais
+    // pixels que o box menor de antes), MSAA passou a ter custo real de
+    // GPU — as bordas dos paineis em movimento nao ficam visivelmente
+    // serrilhadas mesmo assim, o efeito de velocidade ja borra os contornos.
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: false,
       alpha: false,
       powerPreference: "high-performance",
     });

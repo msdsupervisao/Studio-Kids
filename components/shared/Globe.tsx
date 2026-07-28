@@ -35,6 +35,58 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 const LAND_DATA_URL = "/data/land-50m.json";
 
+// Mascara terrestre usada so pra decidir "esse ponto e terra?" (pontos do
+// globo) — nao precisa da resolucao alta de um mapa pra exibicao, e um
+// globo de ~80px nao mostraria a diferenca. Compartilhado entre TODAS as
+// instancias de Globe montadas ao mesmo tempo (ex: os dois globos da tela
+// de login): sem isso, cada instancia buscava e reprocessava os ~2.7MB de
+// GeoJSON do zero, dobrando (ou mais) o trabalho de rede/CPU logo na
+// carga da pagina.
+const LAND_MASK_WIDTH = 512;
+const LAND_MASK_HEIGHT = 256;
+
+let landFeaturesPromise: Promise<FeatureCollection> | null = null;
+function getLandFeatures(): Promise<FeatureCollection> {
+  if (!landFeaturesPromise) {
+    landFeaturesPromise = fetch(LAND_DATA_URL)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load land data");
+        return response.json() as Promise<FeatureCollection>;
+      })
+      .catch((error: unknown) => {
+        landFeaturesPromise = null;
+        throw error;
+      });
+  }
+  return landFeaturesPromise;
+}
+
+let landMaskPromise: Promise<Uint8ClampedArray> | null = null;
+function getLandMask(landFeatures: FeatureCollection): Promise<Uint8ClampedArray> {
+  if (!landMaskPromise) {
+    landMaskPromise = (async () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = LAND_MASK_WIDTH;
+      canvas.height = LAND_MASK_HEIGHT;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("Canvas not supported");
+      const projection = geoEquirectangular().fitSize([LAND_MASK_WIDTH, LAND_MASK_HEIGHT], { type: "Sphere" } as never);
+      const pathGenerator = geoPath().projection(projection).context(ctx);
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, LAND_MASK_WIDTH, LAND_MASK_HEIGHT);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      landFeatures.features.forEach((feature) => pathGenerator(feature as GeoPermissibleObjects));
+      ctx.fill();
+      return ctx.getImageData(0, 0, LAND_MASK_WIDTH, LAND_MASK_HEIGHT).data;
+    })().catch((error: unknown) => {
+      landMaskPromise = null;
+      throw error;
+    });
+  }
+  return landMaskPromise;
+}
+
 type Rgba = { r: number; g: number; b: number; a: number };
 
 function parseColorToRgba(input: string): Rgba {
@@ -242,7 +294,10 @@ export function Globe({
     camera.position.set(0, 0, cameraDistance);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    // Sem antialias: a diferenca e imperceptivel num icone de ~80px, e MSAA
+    // tem custo real de GPU — nao vale a pena com 2 globos rodando junto
+    // com o tunel de fundo.
+    const renderer = new WebGLRenderer({ antialias: false, alpha: true });
     renderer.setSize(containerWidth, containerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = "srgb";
@@ -270,7 +325,9 @@ export function Globe({
     const fillRgba = parseColorToRgba(resolvedFillColor);
     void markerRgba;
 
-    const oceanGeometry = new SphereGeometry(globeRadius, 64, 64);
+    // 64x64 segmentos e overkill pra um icone decorativo de ~80px — reduz
+    // o custo de vertex shader por frame sem diferenca visivel nesse tamanho.
+    const oceanGeometry = new SphereGeometry(globeRadius, 24, 16);
     const oceanColorObj = resolvedOceanColor ? new Color(resolvedOceanColor) : new Color(0, 0, 0);
     const oceanMaterial = new MeshBasicMaterial({
       color: oceanColorObj,
@@ -376,9 +433,7 @@ export function Globe({
     const loadWorldData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(LAND_DATA_URL);
-        if (!response.ok) throw new Error("Failed to load land data");
-        const landFeatures = (await response.json()) as FeatureCollection;
+        const landFeatures = await getLandFeatures();
 
         while (continentOutlineGroup.children.length > 0) {
           continentOutlineGroup.remove(continentOutlineGroup.children[0]!);
@@ -453,30 +508,12 @@ export function Globe({
           });
         }
 
-        const bitmapWidth = 2048;
-        const bitmapHeight = 1024;
-        const offscreenCanvas = document.createElement("canvas");
-        offscreenCanvas.width = bitmapWidth;
-        offscreenCanvas.height = bitmapHeight;
-        const ctx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) throw new Error("Canvas not supported");
-        const projection = geoEquirectangular().fitSize([bitmapWidth, bitmapHeight], { type: "Sphere" } as never);
-        const pathGenerator = geoPath().projection(projection).context(ctx);
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, bitmapWidth, bitmapHeight);
-        ctx.fillStyle = "#fff";
-        ctx.beginPath();
-        landFeatures.features.forEach((feature: Feature) => {
-          pathGenerator(feature as GeoPermissibleObjects);
-        });
-        ctx.fill();
-        const imageData = ctx.getImageData(0, 0, bitmapWidth, bitmapHeight);
-        const pixels = imageData.data;
+        const pixels = await getLandMask(landFeatures);
         const isOnLand = (lng: number, lat: number) => {
-          const x = Math.round(((lng + 180) / 360) * bitmapWidth) % bitmapWidth;
-          const y = Math.round(((90 - lat) / 180) * bitmapHeight);
-          const clampedY = Math.max(0, Math.min(bitmapHeight - 1, y));
-          const idx = (clampedY * bitmapWidth + x) * 4;
+          const x = Math.round(((lng + 180) / 360) * LAND_MASK_WIDTH) % LAND_MASK_WIDTH;
+          const y = Math.round(((90 - lat) / 180) * LAND_MASK_HEIGHT);
+          const clampedY = Math.max(0, Math.min(LAND_MASK_HEIGHT - 1, y));
+          const idx = (clampedY * LAND_MASK_WIDTH + x) * 4;
           return pixels[idx]! > 128;
         };
 
