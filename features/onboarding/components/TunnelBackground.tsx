@@ -1,75 +1,318 @@
-// Paleta vibrante para os paineis do tunel — mais variada que o
-// PlayfulBackground de proposito, para reproduzir o efeito de referencia
-// (varias cores fortes passando pelas "paredes"), nao so o roxo da marca.
-const PANEL_COLORS = ["#fb7185", "#f59e0b", "#a3e635", "#22d3ee", "#818cf8", "#e879f9"];
+"use client";
 
-// Cada anel cresce do centro para fora em loop (ver @keyframes tunnel-ring em
-// globals.css), com atraso negativo para ja comecar em pontos diferentes do
-// ciclo — sem isso, todos os aneis pulsariam em sincronia em vez de dar a
-// sensacao continua de "voar por um tunel". Poucos aneis + paineis pequenos
-// deixam a grade (a estrutura do tunel) ser o elemento principal, com a cor
-// como destaque — nao o contrario.
-const RING_COUNT = 5;
-const CYCLE_SECONDS = 8;
-
-// PANEL_COLORS.length nunca e 0 — indexacao sempre em faixa, o "as string"
-// so contorna o noUncheckedIndexedAccess do tsconfig.
-function colorAt(n: number): string {
-  return PANEL_COLORS[n % PANEL_COLORS.length] as string;
-}
-
-const RINGS = Array.from({ length: RING_COUNT }, (_, i) => ({
-  colors: [colorAt(i * 2), colorAt(i * 2 + 3), colorAt(i * 2 + 1), colorAt(i * 2 + 4)] as const,
-  delay: -(i * (CYCLE_SECONDS / RING_COUNT)),
-}));
-
-/** Pequeno bloco colorido colado numa borda do anel, simulando um painel na "parede" do tunel. */
-function EdgePanel({ color, side }: { color: string; side: "top" | "bottom" | "left" | "right" }) {
-  const positions = {
-    top: "left-[34%] top-0 h-[4%] w-[14%] -translate-y-1/2",
-    bottom: "bottom-0 left-[52%] h-[4%] w-[14%] translate-y-1/2",
-    left: "left-0 top-[34%] h-[14%] w-[4%] -translate-x-1/2",
-    right: "right-0 top-[52%] h-[14%] w-[4%] translate-x-1/2",
-  } as const;
-  return <div className={`absolute rounded-sm ${positions[side]}`} style={{ backgroundColor: color }} />;
-}
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
 /**
  * Fundo animado em tela cheia para a tela de boas-vindas (onboarding) —
- * grade em perspectiva com aneis retangulares crescendo do centro e
- * paineis coloridos nas "paredes", como voar por um tunel. Inspirado no
- * componente Gallery Tunnel (originkit.dev), recriado em CSS puro (sem
- * nova dependencia) para caber no bundle atual do app. Puramente visual:
- * aria-hidden, pointer-events-none, atras do conteudo (-z-10). Respeita
- * prefers-reduced-motion (regra global em globals.css trava a duracao de
- * qualquer animacao da pagina).
+ * tunel 3D em perspectiva com grade e paineis coloridos/fotos passando
+ * pelas "paredes", como voar por um corredor infinito. Adaptado do
+ * componente Gallery Tunnel (originkit.dev — codigo original usa Three.js
+ * real, nao CSS): removida a interacao por cursor/label ("Press to
+ * Start") e o carregamento de imagens externas do CDN deles, trocado por
+ * fotos proprias em /public/images/tunnel. Puramente visual: aria-hidden,
+ * pointer-events-none, atras do conteudo (-z-10).
  */
+
+const IMAGE_URLS = [
+  "/images/tunnel/tunnel-banner-msd.jpg",
+  "/images/tunnel/tunnel-mascote-equipe.jpg",
+  "/images/tunnel/tunnel-mascote-robotica.jpg",
+  "/images/tunnel/tunnel-mascote-palco.jpg",
+  "/images/tunnel/tunnel-professor-ia.jpg",
+  "/images/tunnel/tunnel-photo-1.jpg",
+  "/images/tunnel/tunnel-photo-2.jpg",
+  "/images/tunnel/tunnel-photo-3.jpg",
+  "/images/tunnel/tunnel-photo-4.jpg",
+  "/images/tunnel/tunnel-photo-gato.jpg",
+];
+
+// Valores exatos do preset "Gallery Tunnel" de referencia.
+const BACKGROUND = "#000000";
+const LINE_COLOR = "#B0B0B0";
+const LINE_OPACITY = 50;
+const PANEL_COLORS = ["#FF6A00", "#AB54F7", "#EA3737", "#0072E3", "#00AA3C", "#FFB200"];
+const GRID = 4;
+const SPEED = 100;
+const FADE = 100;
+
+const TUNNEL_WIDTH = 2;
+const TUNNEL_HEIGHT = 1.8;
+const SEGMENT_DEPTH = 1;
+const NUM_SEGMENTS = 15;
+const LINE_RADIUS = 0.003;
+const SCROLL_TO_Z = 0.05;
+const CAMERA_CHASE = 0.1;
+const FADE_IN = 1;
+const FOG_FAR = NUM_SEGMENTS * SEGMENT_DEPTH * 0.95;
+
+// prefers-reduced-motion: em vez de remover a animacao (a regra global em
+// globals.css so cobre @keyframes CSS, nao o loop requestAnimationFrame
+// daqui), reduz drasticamente a velocidade — ainda mostra o efeito, sem o
+// movimento continuo que incomoda quem tem sensibilidade vestibular.
+const REDUCED_MOTION_FACTOR = 0.06;
+
 export function TunnelBackground() {
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    const canvas = canvasRef.current;
+    if (!frame || !canvas) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const speedFactor = (Math.max(0, SPEED) / 100) * (reducedMotion ? REDUCED_MOTION_FACTOR : 1);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(BACKGROUND);
+
+    const fogNear = Math.min(FOG_FAR * (1 - Math.min(100, Math.max(0, FADE)) / 100), FOG_FAR - 0.01);
+    scene.fog = new THREE.Fog(new THREE.Color(BACKGROUND), fogNear, FOG_FAR);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 1, 1000);
+    camera.position.set(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    const lineMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(LINE_COLOR),
+      transparent: true,
+      opacity: Math.min(100, Math.max(0, LINE_OPACITY)) / 100,
+    });
+
+    const loader = new THREE.TextureLoader();
+    const fading: THREE.MeshBasicMaterial[] = [];
+
+    let imageIndex = 0;
+    let colorIndex = 0;
+    let populateIndex = 0;
+    let scrollPos = 0;
+    let raf = 0;
+    let last = 0;
+    let alive = true;
+
+    const hw = TUNNEL_WIDTH / 2;
+    const hh = TUNNEL_HEIGHT / 2;
+
+    const cols = Math.max(1, Math.round(GRID));
+    const rows = Math.max(1, Math.round(GRID));
+    const colW = TUNNEL_WIDTH / cols;
+    const rowH = TUNNEL_HEIGHT / rows;
+
+    const geoFloor = new THREE.PlaneGeometry(colW, SEGMENT_DEPTH);
+    const geoWall = new THREE.PlaneGeometry(SEGMENT_DEPTH, rowH);
+
+    const geoTubeZ = new THREE.TubeGeometry(
+      new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -SEGMENT_DEPTH)),
+      1,
+      LINE_RADIUS,
+      8
+    );
+    const geoTubeX = new THREE.TubeGeometry(
+      new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(TUNNEL_WIDTH, 0, 0)),
+      1,
+      LINE_RADIUS,
+      8
+    );
+    const geoTubeY = new THREE.TubeGeometry(
+      new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, TUNNEL_HEIGHT, 0)),
+      1,
+      LINE_RADIUS,
+      8
+    );
+
+    const colorMats = PANEL_COLORS.map(
+      (hex) => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex), side: THREE.DoubleSide })
+    );
+
+    const imageMats = IMAGE_URLS.map((url) => {
+      const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.DoubleSide });
+      loader.load(
+        url,
+        (tex) => {
+          if (!alive) {
+            tex.dispose();
+            return;
+          }
+          tex.minFilter = THREE.LinearFilter;
+          tex.generateMipmaps = false;
+          tex.colorSpace = THREE.SRGBColorSpace;
+          mat.map = tex;
+          mat.needsUpdate = true;
+          fading.push(mat);
+        },
+        undefined,
+        () => {
+          // Uma URL quebrada custa um painel em branco, nao o tunel inteiro.
+        }
+      );
+      return mat;
+    });
+
+    const tube = (geo: THREE.BufferGeometry, x: number, y: number, z = 0) => {
+      const m = new THREE.Mesh(geo, lineMaterial);
+      m.position.set(x, y, z);
+      return m;
+    };
+
+    const SLOTS: Array<{ geo: THREE.BufferGeometry; pos: THREE.Vector3; rot: THREE.Euler }> = [];
+    {
+      const z = -SEGMENT_DEPTH / 2;
+      for (let i = 0; i < cols; i++) {
+        const x = -hw + i * colW + colW / 2;
+        SLOTS.push({ geo: geoFloor, pos: new THREE.Vector3(x, -hh, z), rot: new THREE.Euler(-Math.PI / 2, 0, 0) });
+        SLOTS.push({ geo: geoFloor, pos: new THREE.Vector3(x, hh, z), rot: new THREE.Euler(Math.PI / 2, 0, 0) });
+      }
+      for (let i = 0; i < rows; i++) {
+        const y = -hh + i * rowH + rowH / 2;
+        SLOTS.push({ geo: geoWall, pos: new THREE.Vector3(-hw, y, z), rot: new THREE.Euler(0, Math.PI / 2, 0) });
+        SLOTS.push({ geo: geoWall, pos: new THREE.Vector3(hw, y, z), rot: new THREE.Euler(0, -Math.PI / 2, 0) });
+      }
+    }
+
+    function populate(group: THREE.Group) {
+      const takesSlabs = populateIndex % 2 === 0;
+      populateIndex++;
+      const slabs = group.userData.slabs as THREE.Mesh[];
+
+      for (const slab of slabs) {
+        if (!takesSlabs || Math.random() > 0.5) {
+          slab.visible = false;
+          continue;
+        }
+        slab.visible = true;
+        if (Math.random() > 0.5) {
+          // Modulo por .length garante indice sempre valido — noUncheckedIndexedAccess
+          // e quem exige o "as", nao ha risco real de leitura fora da faixa.
+          slab.material = colorMats[(5 * colorIndex) % colorMats.length] as THREE.MeshBasicMaterial;
+          colorIndex++;
+        } else {
+          slab.material = imageMats[(3 * imageIndex) % imageMats.length] as THREE.MeshBasicMaterial;
+          imageIndex++;
+        }
+      }
+    }
+
+    function createSegment(z: number) {
+      const group = new THREE.Group();
+      group.position.z = z;
+
+      for (let i = 0; i <= cols; i++) {
+        const x = -hw + i * colW;
+        group.add(tube(geoTubeZ, x, -hh));
+        group.add(tube(geoTubeZ, x, hh));
+      }
+      for (let i = 1; i < rows; i++) {
+        const y = -hh + i * rowH;
+        group.add(tube(geoTubeZ, -hw, y));
+        group.add(tube(geoTubeZ, hw, y));
+      }
+      group.add(tube(geoTubeX, -hw, -hh));
+      group.add(tube(geoTubeX, -hw, hh));
+      group.add(tube(geoTubeY, -hw, -hh));
+      group.add(tube(geoTubeY, hw, -hh));
+
+      const slabs: THREE.Mesh[] = SLOTS.map((slot) => {
+        const m = new THREE.Mesh(slot.geo, colorMats[0]);
+        m.position.copy(slot.pos);
+        m.rotation.copy(slot.rot);
+        m.visible = false;
+        group.add(m);
+        return m;
+      });
+      group.userData.slabs = slabs;
+
+      populate(group);
+      return group;
+    }
+
+    const segments: THREE.Group[] = [];
+    for (let i = 0; i < NUM_SEGMENTS; i++) {
+      const g = createSegment(-i * SEGMENT_DEPTH);
+      scene.add(g);
+      segments.push(g);
+    }
+
+    const resize = () => {
+      const w = Math.max(1, frame.clientWidth);
+      const h = Math.max(1, frame.clientHeight);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(frame);
+    resize();
+
+    const animate = (now: number) => {
+      if (!alive) return;
+      raf = requestAnimationFrame(animate);
+      const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
+      last = now;
+
+      scrollPos += speedFactor;
+
+      const want = -SCROLL_TO_Z * scrollPos;
+      camera.position.z += CAMERA_CHASE * (want - camera.position.z);
+
+      const span = NUM_SEGMENTS * SEGMENT_DEPTH;
+      const z = camera.position.z;
+      for (const seg of segments) {
+        if (seg.position.z > z + SEGMENT_DEPTH) {
+          let min = 0;
+          for (const s of segments) min = Math.min(min, s.position.z);
+          seg.position.z = min - SEGMENT_DEPTH;
+          populate(seg);
+        } else if (seg.position.z < z - span - SEGMENT_DEPTH) {
+          let max = -999999;
+          for (const s of segments) max = Math.max(max, s.position.z);
+          seg.position.z = max + SEGMENT_DEPTH;
+          populate(seg);
+        }
+      }
+
+      for (let i = fading.length - 1; i >= 0; i--) {
+        const m = fading[i] as THREE.MeshBasicMaterial;
+        m.opacity = Math.min(1, m.opacity + dt / FADE_IN);
+        if (m.opacity >= 1) fading.splice(i, 1);
+      }
+
+      renderer.render(scene, camera);
+    };
+    raf = requestAnimationFrame(animate);
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+
+      geoFloor.dispose();
+      geoWall.dispose();
+      geoTubeZ.dispose();
+      geoTubeX.dispose();
+      geoTubeY.dispose();
+      for (const m of colorMats) m.dispose();
+      for (const m of imageMats) {
+        m.map?.dispose();
+        m.dispose();
+      }
+      lineMaterial.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#0a0714]">
-      <div
-        className="absolute left-1/2 top-1/2 h-[60%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)" }}
-      />
-
-      {/* Duas diagonais de canto a canto, cruzando no centro — a "linha de fuga" classica de perspectiva de 1 ponto. */}
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line x1="0" y1="0" x2="100" y2="100" stroke="white" strokeOpacity="0.18" vectorEffect="non-scaling-stroke" />
-        <line x1="100" y1="0" x2="0" y2="100" stroke="white" strokeOpacity="0.18" vectorEffect="non-scaling-stroke" />
-      </svg>
-
-      {RINGS.map((ring, i) => (
-        <div
-          key={i}
-          className="animate-tunnel-ring absolute left-1/2 top-1/2 h-[85%] w-[85%] border border-white/40"
-          style={{ animationDuration: `${CYCLE_SECONDS}s`, animationDelay: `${ring.delay}s` }}
-        >
-          <EdgePanel color={ring.colors[0]} side="top" />
-          <EdgePanel color={ring.colors[1]} side="right" />
-          <EdgePanel color={ring.colors[2]} side="bottom" />
-          <EdgePanel color={ring.colors[3]} side="left" />
-        </div>
-      ))}
+    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <div ref={frameRef} className="h-full w-full">
+        <canvas ref={canvasRef} className="block h-full w-full" />
+      </div>
     </div>
   );
 }

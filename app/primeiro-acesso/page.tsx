@@ -19,7 +19,7 @@ export default async function FirstAccessPage() {
   if (profile?.onboarding_completed_at) redirect(ROUTES.home);
 
   return (
-    <div className="relative isolate flex min-h-screen w-full flex-col items-center justify-center overflow-hidden px-6 py-12">
+    <div className="relative isolate flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-black px-6 py-12">
       <TunnelBackground />
       <Link href={ROUTES.home} className="relative z-10 mb-8">
         <span
