@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/services/supabase/server";
 import { OnboardingWizard } from "@/features/onboarding/components/OnboardingWizard";
-import { TunnelBackground } from "@/features/onboarding/components/TunnelBackground";
+import { TunnelBackground } from "@/components/shared/TunnelBackground";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Bem-vindo" };
