@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { LoginForm } from "@/features/auth/components/LoginForm";
-import { APP_NAME, ROUTES } from "@/lib/constants";
 import Link from "next/link";
+import { LoginForm } from "@/features/auth/components/LoginForm";
+import { TunnelBackground } from "@/components/shared/TunnelBackground";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Entrar" };
 
@@ -13,7 +14,10 @@ export default function LoginPage() {
           {APP_NAME}
         </span>
       </Link>
-      <LoginForm />
+      <div className="relative isolate flex min-h-[70vh] w-full items-center justify-center overflow-hidden">
+        <TunnelBackground />
+        <LoginForm />
+      </div>
     </div>
   );
 }
