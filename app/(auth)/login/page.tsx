@@ -20,7 +20,7 @@ const GLOBE_PROPS = {
 
 export default function LoginPage() {
   return (
-    <div className="relative isolate flex min-h-[70vh] w-full flex-col items-center justify-center overflow-hidden">
+    <div className="relative isolate flex min-h-[70vh] w-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12">
       <TunnelBackground />
       <div className="relative z-10 mb-8 flex items-center gap-1 sm:gap-3">
         <div className="h-16 w-16 sm:h-20 sm:w-20">

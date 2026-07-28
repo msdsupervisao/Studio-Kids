@@ -15,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute inset-0 bg-gradient-to-t from-sidebar/40 to-transparent" />
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">{children}</div>
+      <div className="relative flex flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }
