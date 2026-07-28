@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Compass, Zap } from "lucide-react";
+import { ChevronRight, Compass, Sparkles, Zap } from "lucide-react";
 import { listCategories, listPublishedVideos } from "@/features/video/actions/video.actions";
 import { listShorts } from "@/features/shorts/actions/shorts.actions";
 import { VideoCard } from "@/components/shared/VideoCard";
 import { ShortCard } from "@/components/shared/ShortCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CategoryFilterBar } from "@/components/shared/CategoryFilterBar";
+import { VideoCoverflow } from "@/features/video/components/VideoCoverflow";
 import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Início" };
@@ -23,9 +24,21 @@ export default async function HomePage({
     listShorts(10),
   ]);
 
+  const featuredVideos = videos.slice(0, 10);
+
   return (
     <div className="space-y-8">
       <CategoryFilterBar categories={categories} activeSlug={categoria} basePath={ROUTES.home} />
+
+      {featuredVideos.length > 1 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Em destaque</h2>
+          </div>
+          <VideoCoverflow videos={featuredVideos} />
+        </section>
+      )}
 
       {shorts.length > 0 && (
         <section className="space-y-3">
