@@ -54,6 +54,7 @@
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-slide-up: slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-particle-float: particle-float ease-in-out infinite;
+  --animate-tunnel-ring: tunnel-ring linear infinite;
 
   @keyframes fade-in {
     from {
@@ -80,6 +81,24 @@
     }
     50% {
       transform: translate(8px, -22px);
+    }
+  }
+  /* Anel crescendo do centro para fora, como voar por um tunel em
+     perspectiva — usado em TunnelBackground.tsx (tela de boas-vindas). */
+  @keyframes tunnel-ring {
+    0% {
+      transform: translate(-50%, -50%) scale(0.05);
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.9;
+    }
+    80% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
     }
   }
 }

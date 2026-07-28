@@ -15,7 +15,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
   const [state, action, pending] = useActionState(completeOnboarding, initialState);
 
   return (
-    <div className="w-full max-w-lg space-y-6">
+    <div className="relative z-10 w-full max-w-lg space-y-6 rounded-2xl border border-border/50 bg-background/35 p-6 shadow-sm backdrop-blur-sm">
       <div className="space-y-2 text-center">
         <Rocket className="mx-auto h-10 w-10 text-primary" />
         <h1 className="text-2xl font-semibold tracking-tight">Sua criatividade + a tecnologia são um superpoder!</h1>
@@ -28,7 +28,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
       <form action={action} className="space-y-4">
         <input type="hidden" name="role" value="professor" />
 
-        <div className="space-y-4 rounded-xl border border-border p-4">
+        <div className="space-y-4 rounded-xl border border-border bg-background p-4">
           <div className="space-y-1.5">
             <Label htmlFor="channelName">Nome do canal</Label>
             <Input
