@@ -179,7 +179,7 @@ export function VideoForm({
         {phase === "compressing"
           ? `Comprimindo vídeo... ${progress}%`
           : phase === "sending"
-            ? "Enviando..."
+            ? `Enviando... ${progress}%`
             : isShort
               ? "Enviar Short para análise"
               : "Enviar para análise"}
@@ -188,7 +188,7 @@ export function VideoForm({
         {phase === "compressing"
           ? "Reduzindo o tamanho do vídeo no seu navegador antes do envio — isso pode levar alguns minutos."
           : phase === "sending"
-            ? "Enviando o arquivo para o servidor — não feche nem atualize esta aba até terminar."
+            ? "Enviando o arquivo para o servidor — em conexões lentas pode levar bastante tempo, mas continua funcionando. Não feche nem atualize esta aba até terminar."
             : "Seu vídeo ficará visível após a aprovação da nossa equipe."}
       </p>
     </form>

@@ -48,6 +48,7 @@ export function useUpload(targetPlaylistId?: string) {
       );
 
       setPhase("sending");
+      setProgress(0);
       // Objeto novo, so com campos de texto — nao repassar `input` inteiro,
       // que ainda carrega os File como propriedades e faria o Next.js
       // voltar a serializar tudo como multipart (o mesmo bug do upload
@@ -66,7 +67,9 @@ export function useUpload(targetPlaylistId?: string) {
 
       const videoExtension = compressedVideoFile.name.split(".").pop() ?? "mp4";
       const videoPath = `${input.channelId}/${videoId}.${videoExtension}`;
-      await storage.upload(STORAGE_BUCKETS.videos, videoPath, compressedVideoFile);
+      await storage.uploadWithProgress(STORAGE_BUCKETS.videos, videoPath, compressedVideoFile, (fraction) =>
+        setProgress(Math.round(fraction * 100))
+      );
 
       let thumbnailPath: string | null = null;
       if (input.thumbnailFile) {
