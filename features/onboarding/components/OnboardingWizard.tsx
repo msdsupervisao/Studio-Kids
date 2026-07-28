@@ -15,7 +15,7 @@ export function OnboardingWizard({ fullName }: { fullName: string }) {
   const [state, action, pending] = useActionState(completeOnboarding, initialState);
 
   return (
-    <div className="relative z-10 w-full max-w-lg space-y-6 rounded-2xl border border-border/50 bg-background/35 p-6 shadow-sm backdrop-blur-sm">
+    <div className="force-light-theme relative z-10 w-full max-w-lg space-y-6 rounded-2xl border border-white/10 bg-background/90 p-6 shadow-2xl backdrop-blur-md">
       <div className="space-y-2 text-center">
         <Rocket className="mx-auto h-10 w-10 text-primary" />
         <h1 className="text-2xl font-semibold tracking-tight">Sua criatividade + a tecnologia são um superpoder!</h1>
