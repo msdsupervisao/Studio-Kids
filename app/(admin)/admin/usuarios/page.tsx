@@ -6,12 +6,15 @@ export const metadata: Metadata = { title: "Usuários" };
 
 export default async function AdminUsersPage() {
   const supabase = await createClient();
-  const { data: users } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+  const [{ data: users }, { data: auth }] = await Promise.all([
+    supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+    supabase.auth.getUser(),
+  ]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold tracking-tight">Usuários</h1>
-      <UserManager users={users ?? []} />
+      <UserManager users={users ?? []} currentUserId={auth.user?.id ?? null} />
     </div>
   );
 }

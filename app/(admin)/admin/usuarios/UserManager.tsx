@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { updateUserRole } from "./actions";
+import { updateUserRole, deleteUser } from "./actions";
 import type { Profile, UserRole } from "@/types/user.types";
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -13,23 +14,31 @@ const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Admin",
 };
 
-export function UserManager({ users }: { users: Profile[] }) {
+export function UserManager({ users, currentUserId }: { users: Profile[]; currentUserId: string | null }) {
+  const [rows, setRows] = useState(users);
+
   return (
     <ul className="divide-y divide-border rounded-xl border border-border">
-      {users.map((user) => (
-        <UserRow key={user.id} user={user} />
+      {rows.map((user) => (
+        <UserRow
+          key={user.id}
+          user={user}
+          isSelf={user.id === currentUserId}
+          onDeleted={() => setRows((current) => current.filter((row) => row.id !== user.id))}
+        />
       ))}
     </ul>
   );
 }
 
-function UserRow({ user }: { user: Profile }) {
+function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; onDeleted: () => void }) {
   // Select do Radix e "uncontrolled" apos montar — se so usarmos
   // defaultValue, uma falha no servidor deixa o dropdown mostrando o papel
   // errado (o que foi clicado, nao o que persistiu). Guardar em estado e so
   // atualizar depois da confirmacao do servidor evita essa mentira na tela.
   const [role, setRole] = useState(user.role);
   const [isPending, startTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   function handleChange(nextRole: UserRole) {
     const previousRole = role;
@@ -41,6 +50,25 @@ function UserRow({ user }: { user: Profile }) {
       } catch (error) {
         setRole(previousRole);
         toast.error(error instanceof Error ? error.message : "Falha ao atualizar papel");
+      }
+    });
+  }
+
+  function handleDelete() {
+    if (
+      !confirm(
+        `Remover a conta de @${user.username}? Isso apaga o perfil, canais, vídeos e comentários dessa conta permanentemente. Essa ação não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+    startDeleteTransition(async () => {
+      try {
+        await deleteUser(user.id);
+        toast.success("Conta removida");
+        onDeleted();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Falha ao remover conta");
       }
     });
   }
@@ -57,18 +85,29 @@ function UserRow({ user }: { user: Profile }) {
           <p className="text-xs text-muted-foreground">@{user.username}</p>
         </div>
       </div>
-      <Select value={role} onValueChange={(value) => handleChange(value as UserRole)} disabled={isPending}>
-        <SelectTrigger className="w-36">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(ROLE_LABEL).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select value={role} onValueChange={(value) => handleChange(value as UserRole)} disabled={isPending}>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(ROLE_LABEL).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={isDeleting || isSelf}
+          title={isSelf ? "Você não pode remover sua própria conta" : undefined}
+          className="focus-ring flex items-center gap-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </li>
   );
 }
