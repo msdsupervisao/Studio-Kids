@@ -12,8 +12,12 @@ const GLOBE_PROPS = {
   detail: 3,
   showGrid: false,
   oceanColor: "rgba(0,0,0,0)",
-  outlineColor: "#ffffff",
-  outlineWidth: 1.5,
+  // O contorno dos continentes desenha uma malha 3D (TubeGeometry) separada
+  // para cada trecho de cada litoral do planeta — milhares de draw calls
+  // por globo. Pesado demais pra um icone decorativo de ~80px, ainda mais
+  // com dois globos rodando ao mesmo tempo que o tunel. So os pontos (uma
+  // unica malha instanciada) ja dao a leitura do globo por um custo bem menor.
+  showOutline: false,
   dots: { color: "#ffffff", size: 3, density: 6, allDots: false },
   stopOnHover: false,
 } as const;
