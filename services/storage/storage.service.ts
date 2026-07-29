@@ -103,6 +103,15 @@ export function createStorageService(supabase: SupabaseClient<Database>) {
    * STALL_TIMEOUT_MS) em vez de um prazo total — ver comentario acima.
    * So funciona no navegador (XMLHttpRequest); em qualquer outro contexto
    * cai de volta em `upload` sem progresso.
+   *
+   * Caminho novo (URL assinada + XMLHttpRequest) e recente e ainda pode
+   * ter modo de falha que nao mapeamos (proxy/CORS especifico de alguma
+   * rede, etc. — visto na pratica: upload ficando incompleto sem erro
+   * claro pro usuario). Qualquer falha nesse caminho cai pro metodo
+   * antigo (supabase-js .upload(), sem progresso mas comprovadamente
+   * confiavel ha meses, inclusive testado com arquivo de 151MB) em vez de
+   * deixar o envio inteiro falhar. So perde a barra de progresso nesse
+   * caso, nao a funcionalidade.
    */
   async function uploadWithProgress(
     bucket: Bucket,
@@ -114,12 +123,10 @@ export function createStorageService(supabase: SupabaseClient<Database>) {
       return upload(bucket, path, file);
     }
 
-    const { data: signed, error: signError } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
-    if (signError || !signed) {
-      throw new Error(`Falha ao preparar envio para ${bucket}/${path}: ${signError?.message ?? "erro desconhecido"}`);
-    }
-
     try {
+      const { data: signed, error: signError } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
+      if (signError || !signed) throw new Error(signError?.message ?? "erro desconhecido ao preparar envio");
+
       await uploadFileViaXhr(
         signed.signedUrl,
         file,
@@ -131,16 +138,15 @@ export function createStorageService(supabase: SupabaseClient<Database>) {
         },
         onProgress
       );
-    } catch (err) {
-      if (err instanceof Error && err.message === STALL_ERROR_MARKER) {
-        throw new Error("O envio ficou sem resposta e foi interrompido — verifique sua conexão e tente novamente.");
-      }
-      throw new Error(
-        `Falha ao enviar arquivo para ${bucket}/${path}: ${err instanceof Error ? err.message : "erro desconhecido"}`
-      );
-    }
 
-    return path;
+      return path;
+    } catch (err) {
+      console.error(
+        `[storage] envio com progresso falhou para ${bucket}/${path}, tentando metodo antigo sem progresso:`,
+        err
+      );
+      return upload(bucket, path, file);
+    }
   }
 
   function getPublicUrl(bucket: Bucket, path: string | null): string | null {

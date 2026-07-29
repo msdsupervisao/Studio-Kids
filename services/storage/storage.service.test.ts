@@ -16,7 +16,7 @@ function makeSupabaseWithSignedUrl(
           data: { signedUrl, token: "abc", path: "x.mp4" },
           error: null,
         }),
-        upload: vi.fn(),
+        upload: vi.fn().mockResolvedValue({ error: null }),
       }),
     },
   };
@@ -114,7 +114,7 @@ describe("uploadWithProgress", () => {
     await expect(promise).resolves.toBe("x.mp4");
   });
 
-  it("aborta e lança mensagem amigável quando fica sem nenhum avanço pela janela de travamento", async () => {
+  it("cai pro metodo antigo quando fica sem nenhum avanço pela janela de travamento", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("XMLHttpRequest", FakeXHR as unknown as typeof XMLHttpRequest);
     const supabase = makeSupabaseWithSignedUrl();
@@ -122,15 +122,15 @@ describe("uploadWithProgress", () => {
     const file = makeFile(1000);
 
     const promise = storage.uploadWithProgress(STORAGE_BUCKETS.videos, "x.mp4", file);
-    const assertion = expect(promise).rejects.toThrow("O envio ficou sem resposta");
     await vi.advanceTimersByTimeAsync(45_000);
-    await assertion;
 
     const xhr = FakeXHR.instances.at(-1) as FakeXHR;
     expect(xhr.aborted).toBe(true);
+    await expect(promise).resolves.toBe("x.mp4");
+    expect(supabase.storage.from().upload).toHaveBeenCalled();
   });
 
-  it("propaga erro quando o PUT responde com status fora da faixa 2xx", async () => {
+  it("cai pro metodo antigo quando o PUT responde com status fora da faixa 2xx", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXHR as unknown as typeof XMLHttpRequest);
     const supabase = makeSupabaseWithSignedUrl();
     const storage = createStorageService(supabase as never);
@@ -143,15 +143,37 @@ describe("uploadWithProgress", () => {
     xhr.status = 403;
     xhr.onload?.();
 
-    await expect(promise).rejects.toThrow("Falha ao enviar arquivo");
+    await expect(promise).resolves.toBe("x.mp4");
+    expect(supabase.storage.from().upload).toHaveBeenCalled();
   });
 
-  it("lança erro quando falha ao preparar a URL assinada de upload", async () => {
+  it("cai pro metodo antigo quando falha ao preparar a URL assinada de upload", async () => {
+    vi.stubGlobal("XMLHttpRequest", FakeXHR as unknown as typeof XMLHttpRequest);
+    const uploadMock = vi.fn().mockResolvedValue({ error: null });
+    const supabase = {
+      storage: {
+        from: vi.fn().mockReturnValue({
+          createSignedUploadUrl: vi.fn().mockResolvedValue({ data: null, error: { message: "sem permissão" } }),
+          upload: uploadMock,
+        }),
+      },
+    };
+    const storage = createStorageService(supabase as never);
+    const file = makeFile(100);
+
+    const result = await storage.uploadWithProgress(STORAGE_BUCKETS.videos, "x.mp4", file);
+
+    expect(result).toBe("x.mp4");
+    expect(uploadMock).toHaveBeenCalled();
+  });
+
+  it("lança erro quando o metodo antigo tambem falha (nenhum caminho funcionou)", async () => {
     vi.stubGlobal("XMLHttpRequest", FakeXHR as unknown as typeof XMLHttpRequest);
     const supabase = {
       storage: {
         from: vi.fn().mockReturnValue({
           createSignedUploadUrl: vi.fn().mockResolvedValue({ data: null, error: { message: "sem permissão" } }),
+          upload: vi.fn().mockResolvedValue({ error: { message: "bucket indisponível" } }),
         }),
       },
     };
@@ -159,7 +181,7 @@ describe("uploadWithProgress", () => {
     const file = makeFile(100);
 
     await expect(storage.uploadWithProgress(STORAGE_BUCKETS.videos, "x.mp4", file)).rejects.toThrow(
-      "Falha ao preparar envio"
+      "Falha ao enviar arquivo"
     );
   });
 
