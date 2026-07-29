@@ -165,7 +165,13 @@ export async function compressVideo(
       COMPRESSION_TIMEOUT_MS,
       "Tempo esgotado ao comprimir o video"
     );
-  } catch {
+  } catch (err) {
+    // Sem isso, uma falha real do ffmpeg.wasm no meio da codificacao
+    // (ex: estourar memoria) desaparece sem rastro nenhum — o fallback
+    // silencioso pro arquivo original e proposital (nao trava o envio por
+    // causa de compressao), mas perder a causa raiz dificulta descobrir
+    // por que um video especifico nunca comprime o suficiente.
+    console.error("[compressVideo] falha ao comprimir, usando arquivo original:", err);
     return file;
   }
 }
