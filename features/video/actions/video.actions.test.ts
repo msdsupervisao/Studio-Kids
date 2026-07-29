@@ -39,7 +39,9 @@ describe("createDraftVideo (upload)", () => {
 
   it("cria o rascunho e retorna o id do vídeo", async () => {
     const client = createMockSupabaseClient({ id: "user-1" });
-    client.from.mockReturnValueOnce(queryResult({ data: { id: VIDEO_ID } }));
+    client.from
+      .mockReturnValueOnce(queryResult({ data: null })) // checagem de rascunho abandonado: nenhum
+      .mockReturnValueOnce(queryResult({ data: { id: VIDEO_ID } }));
     vi.mocked(createClient).mockResolvedValue(client as never);
 
     const result = await createDraftVideo(validDraft);
@@ -48,10 +50,27 @@ describe("createDraftVideo (upload)", () => {
     expect(client.from).toHaveBeenCalledWith("videos");
   });
 
+  it("apaga rascunho abandonado (sem arquivo) com o mesmo slug antes de inserir", async () => {
+    const client = createMockSupabaseClient({ id: "user-1" });
+    const deleteFn = vi.fn().mockReturnValue(queryResult({ error: null }));
+    client.from
+      .mockReturnValueOnce(queryResult({ data: { id: "stale-draft-id" } })) // rascunho abandonado encontrado
+      .mockReturnValueOnce({ delete: deleteFn } as never)
+      .mockReturnValueOnce(queryResult({ data: { id: VIDEO_ID } }));
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    const result = await createDraftVideo(validDraft);
+
+    expect(result).toEqual({ videoId: VIDEO_ID });
+    expect(deleteFn).toHaveBeenCalled();
+  });
+
   it("sanitiza título/descrição e grava status pending", async () => {
     const client = createMockSupabaseClient({ id: "user-1" });
     const insert = vi.fn().mockReturnValue(queryResult({ data: { id: VIDEO_ID } }));
-    client.from.mockReturnValueOnce({ insert } as never);
+    client.from
+      .mockReturnValueOnce(queryResult({ data: null }))
+      .mockReturnValueOnce({ insert } as never);
     vi.mocked(createClient).mockResolvedValue(client as never);
 
     await createDraftVideo({ ...validDraft, title: "  Introdução   a Frações  " });
@@ -67,10 +86,31 @@ describe("createDraftVideo (upload)", () => {
 
   it("propaga erro do banco ao inserir", async () => {
     const client = createMockSupabaseClient({ id: "user-1" });
-    client.from.mockReturnValueOnce(queryResult({ data: null, error: { message: "coluna inválida" } }));
+    client.from
+      .mockReturnValueOnce(queryResult({ data: null }))
+      .mockReturnValueOnce(queryResult({ data: null, error: { message: "coluna inválida" } }));
     vi.mocked(createClient).mockResolvedValue(client as never);
 
     await expect(createDraftVideo(validDraft)).rejects.toThrow("Falha ao criar vídeo");
+  });
+
+  it("desambigua o slug quando colide com um vídeo de verdade (com arquivo)", async () => {
+    const client = createMockSupabaseClient({ id: "user-1" });
+    const firstInsert = vi
+      .fn()
+      .mockReturnValue(queryResult({ data: null, error: { message: "duplicate key", code: "23505" } }));
+    const secondInsert = vi.fn().mockReturnValue(queryResult({ data: { id: VIDEO_ID } }));
+    client.from
+      .mockReturnValueOnce(queryResult({ data: null })) // checagem de rascunho abandonado: nenhum
+      .mockReturnValueOnce({ insert: firstInsert } as never) // 1a tentativa: colide (23505)
+      .mockReturnValueOnce({ insert: secondInsert } as never); // 2a tentativa: slug desambiguado
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    const result = await createDraftVideo(validDraft);
+
+    expect(result).toEqual({ videoId: VIDEO_ID });
+    expect(firstInsert).toHaveBeenCalledTimes(1);
+    expect(secondInsert).toHaveBeenCalledTimes(1);
   });
 });
 

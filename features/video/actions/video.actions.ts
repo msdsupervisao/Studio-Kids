@@ -248,44 +248,88 @@ export async function createDraftVideo(input: CreateDraftVideoInput) {
   const parsed = createDraftVideoSchema.safeParse(input);
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do vídeo inválidos");
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Sessão expirada. Faça login novamente.");
 
-  const { data: video, error } = await supabase
-    .from("videos")
-    .insert({
-      channel_id: parsed.data.channelId,
-      category_id: parsed.data.categoryId,
-      title: sanitizePlainText(parsed.data.title),
-      slug: slugify(parsed.data.title),
-      description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
-      video_path: "",
-      duration_seconds: parsed.data.durationSeconds,
-      is_short: parsed.data.isShort ?? false,
-      status: "pending",
-    })
-    .select("id")
-    .single();
+    const baseSlug = slugify(parsed.data.title);
 
-  if (error || !video) throw new Error(`Falha ao criar vídeo: ${error?.message ?? "erro desconhecido"}`);
-  return { videoId: video.id as string };
+    // Uma tentativa de upload que falha no meio do caminho (rede caiu,
+    // arquivo grande demais, compressao travou) deixa um rascunho
+    // "pendente" sem arquivo pra tras. Sem isso, uma nova tentativa com o
+    // MESMO titulo esbarra sempre no mesmo slug ja usado (unique
+    // constraint "videos_channel_slug_unique") e trava a pessoa pra
+    // sempre, com um erro 500 sem mensagem clara do motivo real. Rascunho
+    // abandonado (sem arquivo) do mesmo canal e slug e sempre seguro de
+    // substituir.
+    const { data: staleDraft } = await supabase
+      .from("videos")
+      .select("id")
+      .eq("channel_id", parsed.data.channelId)
+      .eq("slug", baseSlug)
+      .eq("video_path", "")
+      .maybeSingle();
+    if (staleDraft) {
+      await supabase.from("videos").delete().eq("id", staleDraft.id);
+    }
+
+    const insertVideo = (slug: string) =>
+      supabase
+        .from("videos")
+        .insert({
+          channel_id: parsed.data.channelId,
+          category_id: parsed.data.categoryId,
+          title: sanitizePlainText(parsed.data.title),
+          slug,
+          description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
+          video_path: "",
+          duration_seconds: parsed.data.durationSeconds,
+          is_short: parsed.data.isShort ?? false,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+    let { data: video, error } = await insertVideo(baseSlug);
+    if (error?.code === "23505") {
+      // Colidiu com um video de verdade (com arquivo) do mesmo canal e
+      // titulo — desambigua em vez de travar a pessoa com um erro opaco.
+      ({ data: video, error } = await insertVideo(`${baseSlug}-${Date.now().toString(36)}`));
+    }
+
+    if (error || !video) throw new Error(`Falha ao criar vídeo: ${error?.message ?? "erro desconhecido"}`);
+    return { videoId: video.id as string };
+  } catch (err) {
+    // O Next.js esconde a mensagem de qualquer excecao nao prevista numa
+    // Server Action em producao (so mostra um "digest" generico pro
+    // cliente) — sem logar aqui, uma falha de rede/conexao inesperada
+    // (diferente dos `throw new Error` de validacao acima, que sao
+    // esperados) desaparece sem deixar pista nenhuma.
+    console.error("[createDraftVideo] falha inesperada:", err);
+    throw err;
+  }
 }
 
 export async function finalizeVideoUpload(videoId: string, videoPath: string, thumbnailPath: string | null) {
   if (!/^[0-9a-f-]{36}$/i.test(videoId) || !videoPath || (thumbnailPath !== null && !thumbnailPath)) {
     throw new Error("Dados de upload inválidos");
   }
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("videos")
-    .update({ video_path: videoPath, thumbnail_path: thumbnailPath })
-    .eq("id", videoId);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("videos")
+      .update({ video_path: videoPath, thumbnail_path: thumbnailPath })
+      .eq("id", videoId);
 
-  if (error) throw new Error(`Falha ao finalizar upload: ${error.message}`);
-  revalidatePath(ROUTES.professorVideos);
+    if (error) throw new Error(`Falha ao finalizar upload: ${error.message}`);
+    revalidatePath(ROUTES.professorVideos);
+  } catch (err) {
+    console.error("[finalizeVideoUpload] falha inesperada:", err);
+    throw err;
+  }
 }
 
 export async function updateVideoStatus(videoId: string, status: VideoStatus, rejectionReason?: string) {
