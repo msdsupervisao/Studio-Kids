@@ -34,7 +34,7 @@ export function LoginForm() {
   const pending = mode === "login" ? loginPending : signupPending;
 
   return (
-    <div className="force-light-theme relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-background/90 p-6 shadow-2xl backdrop-blur-md">
+    <div className="w-full max-w-sm">
       <div className="mb-6 flex rounded-lg bg-secondary p-1">
         <button
           type="button"
