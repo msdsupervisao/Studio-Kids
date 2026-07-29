@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LoginForm } from "@/features/auth/components/LoginForm";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { TunnelBackground } from "@/components/shared/TunnelBackground";
+import { APP_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Entrar" };
 
 export default function LoginPage() {
   return (
-    <div className="flex w-full flex-1 flex-col items-center justify-center px-6 py-12">
-      <Link href={ROUTES.home} className="mb-8">
-        <span className="font-fredoka text-4xl font-semibold tracking-tight text-primary sm:text-5xl">
-          {APP_NAME}
-        </span>
-      </Link>
+    <div className="relative isolate flex min-h-[70vh] w-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12">
+      <TunnelBackground />
+      <span
+        className="relative z-10 mb-8 font-fredoka text-4xl font-semibold tracking-tight text-white sm:text-5xl"
+        style={{ textShadow: "0 2px 16px rgba(0,0,0,0.6)" }}
+      >
+        {APP_NAME}
+      </span>
       <LoginForm />
     </div>
   );
