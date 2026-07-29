@@ -55,11 +55,21 @@ const REDUCED_MOTION_FACTOR = 0.06;
 export function TunnelBackground() {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const debugRef = useRef<HTMLPreElement | null>(null);
 
   useEffect(() => {
     const frame = frameRef.current;
     const canvas = canvasRef.current;
     if (!frame || !canvas) return;
+
+    // Painel temporario de diagnostico — so aparece com ?tunnel_debug=1 na
+    // URL, pra investigar lentidao relatada num aparelho que nao consigo
+    // testar diretamente. Remover depois de confirmado o problema real.
+    // Mutacao direta de estilo (nao React state) pra nao arriscar
+    // divergencia entre a renderizacao no servidor e no cliente.
+    const debugEnabled = new URLSearchParams(window.location.search).has("tunnel_debug");
+    const debugEl = debugEnabled ? debugRef.current : null;
+    if (debugEl) debugEl.style.display = "block";
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const speedFactor = (Math.max(0, SPEED) / 100) * (reducedMotion ? REDUCED_MOTION_FACTOR : 1);
@@ -94,6 +104,10 @@ export function TunnelBackground() {
     const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
     const rendererName = debugInfo ? String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)) : "";
     const isSoftwareRenderer = /swiftshader|llvmpipe|software|basic render driver/i.test(rendererName);
+    if (debugEl) {
+      debugEl.textContent = `renderer: ${rendererName || "(sem info)"}\nsoftware: ${isSoftwareRenderer}`;
+    }
+
     if (isSoftwareRenderer) {
       canvas.style.display = "none";
       frame.style.backgroundColor = BACKGROUND;
@@ -284,7 +298,7 @@ export function TunnelBackground() {
     const frameDurations: number[] = [];
     let frameDurationSum = 0;
 
-    const fallBackToStatic = () => {
+    const fallBackToStatic = (reason: string) => {
       alive = false;
       cancelAnimationFrame(raf);
       // O buffer do canvas fica opaco com o ultimo frame desenhado (alpha:
@@ -294,6 +308,7 @@ export function TunnelBackground() {
       // limpo de "sem tunel" em vez de deixar o ultimo frame congelado.
       canvas.style.display = "none";
       frame.style.backgroundColor = BACKGROUND;
+      if (debugEl) debugEl.textContent += `\nFALLBACK: ${reason}`;
       ro.disconnect();
       geoFloor.dispose();
       geoWall.dispose();
@@ -319,7 +334,7 @@ export function TunnelBackground() {
 
       if (!isFirstFrame && !document.hidden) {
         if (rawMs > CATASTROPHIC_FRAME_MS) {
-          fallBackToStatic();
+          fallBackToStatic(`frame unico de ${rawMs.toFixed(0)}ms`);
           return;
         }
         frameDurations.push(rawMs);
@@ -328,9 +343,14 @@ export function TunnelBackground() {
           frameDurationSum -= frameDurations.shift() as number;
         }
         if (frameDurations.length === FRAME_WINDOW && frameDurationSum / FRAME_WINDOW > SLOW_FRAME_MS_THRESHOLD) {
-          fallBackToStatic();
+          fallBackToStatic(`media de ${(frameDurationSum / FRAME_WINDOW).toFixed(0)}ms/frame`);
           return;
         }
+      }
+
+      if (debugEl && !isFirstFrame) {
+        const avg = frameDurations.length ? frameDurationSum / frameDurations.length : 0;
+        debugEl.textContent = `renderer: ${rendererName || "(sem info)"}\nhidden: ${document.hidden}\nrawMs: ${rawMs.toFixed(0)}\navgMs(${frameDurations.length}): ${avg.toFixed(1)}\nfps~: ${(1000 / Math.max(1, avg)).toFixed(0)}`;
       }
 
       scrollPos += speedFactor;
@@ -402,6 +422,11 @@ export function TunnelBackground() {
       <div ref={frameRef} className="h-full w-full">
         <canvas ref={canvasRef} className="block h-full w-full" />
       </div>
+      <pre
+        ref={debugRef}
+        style={{ display: "none" }}
+        className="pointer-events-none absolute bottom-2 left-2 z-50 whitespace-pre-wrap rounded bg-black/80 p-2 font-mono text-[10px] leading-tight text-lime-400"
+      />
     </div>
   );
 }
