@@ -298,6 +298,25 @@ export function TunnelBackground() {
     const frameDurations: number[] = [];
     let frameDurationSum = 0;
 
+    // O tempo entre chamadas de requestAnimationFrame so prova que o
+    // JAVASCRIPT esta rodando no ritmo certo — visto na pratica (video real
+    // de um usuario): o driver de GPU pode enfileirar o desenho sem
+    // realmente apresentar a tela nova, e o rAF continua tickando normal
+    // enquanto a imagem fica parada. Unico jeito de saber de verdade e ler
+    // pixels reais do canvas periodicamente e comparar com a leitura
+    // anterior — se ficar identica por tempo demais, a tela esta travada
+    // de fato, mesmo com o timing do JS parecendo perfeito.
+    const PIXEL_CHECK_INTERVAL_FRAMES = 20; // ~0.6-0.7s entre checagens a 30fps
+    const PIXEL_CHECK_STALE_LIMIT = 6; // ~6 checagens seguidas iguais = uns 4s parado de verdade
+    // Uma faixa horizontal larga (nao um ponto so) — o centro exato do
+    // tunel costuma ser o fundo escuro nevoado, que quase nao muda de um
+    // frame pro outro mesmo funcionando bem; uma faixa mais larga tem mais
+    // chance de cruzar os paineis coloridos que realmente se movem.
+    const PIXEL_SAMPLE_HEIGHT = 24;
+    let pixelCheckFrameCounter = 0;
+    let lastPixelSample: Uint8Array | null = null;
+    let stalePixelChecks = 0;
+
     const fallBackToStatic = (reason: string) => {
       alive = false;
       cancelAnimationFrame(raf);
@@ -381,6 +400,34 @@ export function TunnelBackground() {
       }
 
       renderer.render(scene, camera);
+
+      if (!document.hidden) {
+        pixelCheckFrameCounter++;
+        if (pixelCheckFrameCounter >= PIXEL_CHECK_INTERVAL_FRAMES) {
+          pixelCheckFrameCounter = 0;
+          try {
+            const sampleWidth = Math.max(1, canvas.width);
+            const sampleHeight = Math.min(PIXEL_SAMPLE_HEIGHT, Math.max(1, canvas.height));
+            const cy = Math.max(0, Math.floor(canvas.height / 2) - Math.floor(sampleHeight / 2));
+            const sample = new Uint8Array(4 * sampleWidth * sampleHeight);
+            gl.readPixels(0, cy, sampleWidth, sampleHeight, gl.RGBA, gl.UNSIGNED_BYTE, sample);
+            const isSameAsLast = lastPixelSample !== null && sample.every((v, i) => v === lastPixelSample![i]);
+            stalePixelChecks = isSameAsLast ? stalePixelChecks + 1 : 0;
+            lastPixelSample = sample;
+            if (debugEl) {
+              debugEl.textContent += `\nstalePixelChecks: ${stalePixelChecks}/${PIXEL_CHECK_STALE_LIMIT}`;
+            }
+            if (stalePixelChecks >= PIXEL_CHECK_STALE_LIMIT) {
+              fallBackToStatic(`imagem parada na tela por ${stalePixelChecks} checagens seguidas`);
+              return;
+            }
+          } catch {
+            // Leitura de pixels pode falhar em navegadores/contextos raros
+            // (perda de contexto WebGL) — nao vale travar a animacao por
+            // isso, so pula essa checagem.
+          }
+        }
+      }
     };
     raf = requestAnimationFrame(animate);
 
