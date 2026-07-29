@@ -8,7 +8,8 @@ import { createStorageService } from "@/services/storage/storage.service";
 import { createDraftVideo, finalizeVideoUpload, type UploadVideoInput } from "@/features/video/actions/video.actions";
 import { addVideoToPlaylist } from "@/features/playlist/actions/playlist.actions";
 import { compressVideo } from "@/features/video/utils/compress-video";
-import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, ROUTES, UPLOAD_LIMITS } from "@/lib/constants";
+import { formatBytes } from "@/utils/format";
 
 export type UploadPhase = "idle" | "compressing" | "sending" | "success" | "error";
 
@@ -46,6 +47,16 @@ export function useUpload(targetPlaylistId?: string) {
       const compressedVideoFile = await compressVideo(input.videoFile, input.durationSeconds, (ratio) =>
         setProgress(Math.round(ratio * 100))
       );
+
+      // O bucket em si permite ate 2GB, mas o plano atual do Supabase tem
+      // um teto de upload por arquivo bem menor pro projeto inteiro — sem
+      // checar aqui, o envio so falha la na frente (depois de criar o
+      // rascunho do video) com um erro confuso vindo direto do Storage.
+      if (compressedVideoFile.size > UPLOAD_LIMITS.maxEffectiveVideoUploadBytes) {
+        throw new Error(
+          `Vídeo muito grande mesmo após compressão (${formatBytes(compressedVideoFile.size)}) — o limite atual é ${formatBytes(UPLOAD_LIMITS.maxEffectiveVideoUploadBytes)}. Tente um vídeo mais curto ou de menor qualidade.`
+        );
+      }
 
       setPhase("sending");
       setProgress(0);

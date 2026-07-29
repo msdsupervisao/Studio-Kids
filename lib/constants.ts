@@ -45,7 +45,14 @@ export const ROUTES = {
 } as const;
 
 export const UPLOAD_LIMITS = {
-  maxVideoSizeBytes: 2 * 1024 * 1024 * 1024, // 2GB
+  maxVideoSizeBytes: 2 * 1024 * 1024 * 1024, // 2GB — teto do bucket "videos" em si
+  // O plano Free do Supabase aplica um limite de upload por arquivo bem
+  // menor que isso, valido pro projeto inteiro, independente do que o
+  // bucket permite (visto na pratica: bucket configurado pra 2GB, upload
+  // de video real barrado com "exceeded the maximum allowed size"). Ajustar
+  // aqui se o projeto virar plano Pro (que permite configurar um limite
+  // maior no painel do Supabase).
+  maxEffectiveVideoUploadBytes: 50 * 1024 * 1024, // 50MB
   maxThumbnailSizeBytes: 5 * 1024 * 1024, // 5MB
   allowedVideoTypes: ["video/mp4", "video/webm", "video/quicktime"],
   allowedImageTypes: ["image/jpeg", "image/png", "image/webp"],

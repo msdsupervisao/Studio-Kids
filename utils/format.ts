@@ -1,3 +1,9 @@
+/** Converte 1572864 em "1.5 MB" ou 800 em "1 KB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /** Converte segundos em "1:02:03" ou "4:05" (padrao YouTube). */
 export function formatDuration(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
