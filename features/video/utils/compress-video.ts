@@ -4,17 +4,30 @@ import { withTimeout } from "@/utils/with-timeout";
 const CORE_VERSION = "0.12.10";
 const CORE_BASE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd`;
 
-// Video com bitrate ja abaixo disso nao compensa recomprimir — o tempo de
-// processamento no navegador nao se traduziria em economia real de banda.
-const TARGET_BITRATE_MBPS = 2.5;
+// Teto de qualidade — acima disso nao compensa o tempo de processamento no
+// navegador pela economia real de banda. Piso — abaixo disso a imagem fica
+// ruim demais pra valer o corte de mais bytes; nesse caso o video so nao
+// cabe no limite em nenhuma qualidade razoavel (o app avisa em vez de
+// tentar espremer mais).
+const MAX_TARGET_BITRATE_MBPS = 2.5;
+const MIN_TARGET_BITRATE_MBPS = 0.4;
+// Codificacao por bitrate nao acerta o alvo com precisao total (variacao
+// de cena, overhead de container/audio) — essa margem evita passar do
+// limite por pouco depois de todo o trabalho de comprimir.
+const SIZE_SAFETY_MARGIN = 0.85;
 const MAX_HEIGHT = 720;
+const LOW_BITRATE_MAX_HEIGHT = 480; // resolucao menor rende mais qualidade por bit quando o alvo e baixo
 
 // Qualquer etapa aqui (ler metadados do video, baixar o ffmpeg.wasm de um
 // CDN externo, codificar) pode travar sem nunca rejeitar a Promise — sem um
 // limite de tempo global, o upload inteiro fica preso em "Comprimindo
-// video... 0%" para sempre, com o usuario sem conseguir enviar nada. Ao
-// estourar o prazo, cai no fallback (arquivo original) e o envio segue.
-const COMPRESSION_TIMEOUT_MS = 45_000;
+// video... 0%" para sempre, com o usuario sem conseguir enviar nada. Video
+// de verdade (varios minutos) pode legitimamente levar mais que um minuto
+// pra codificar em WASM (bem mais lento que codigo nativo) — o prazo
+// precisa ser generoso o bastante pra deixar isso terminar de verdade, nao
+// so cair no fallback do arquivo original (que agora, com o teto de upload
+// do plano atual, tem boa chance de nem caber).
+const COMPRESSION_TIMEOUT_MS = 5 * 60_000;
 const METADATA_TIMEOUT_MS = 8_000;
 
 let ffmpegPromise: Promise<FFmpeg> | null = null;
@@ -37,10 +50,20 @@ async function loadFFmpeg(): Promise<FFmpeg> {
   return ffmpegPromise;
 }
 
-function isAlreadyCompact(file: File, durationSeconds: number): boolean {
-  if (durationSeconds <= 0) return false;
-  const bitrateMbps = (file.size * 8) / durationSeconds / 1_000_000;
-  return bitrateMbps <= TARGET_BITRATE_MBPS;
+function isAlreadyCompact(file: File, maxTargetBytes: number): boolean {
+  return file.size <= maxTargetBytes;
+}
+
+/**
+ * Bitrate que caiba no orcamento de bytes disponivel pra duracao do video,
+ * com margem de seguranca — codificar por qualidade fixa (CRF) nao garante
+ * nenhum tamanho final especifico, um video longo "bem comprimido" ainda
+ * pode passar do limite. Isso mira o TAMANHO, nao a qualidade.
+ */
+function targetBitrateMbps(durationSeconds: number, maxTargetBytes: number): number {
+  if (durationSeconds <= 0) return MAX_TARGET_BITRATE_MBPS;
+  const budgetBitrateMbps = (maxTargetBytes * 8 * SIZE_SAFETY_MARGIN) / durationSeconds / 1_000_000;
+  return Math.max(MIN_TARGET_BITRATE_MBPS, Math.min(MAX_TARGET_BITRATE_MBPS, budgetBitrateMbps));
 }
 
 function getVideoHeight(file: File): Promise<number> {
@@ -58,6 +81,8 @@ function getVideoHeight(file: File): Promise<number> {
 
 async function runCompression(
   file: File,
+  durationSeconds: number,
+  maxTargetBytes: number,
   onProgress?: (ratio: number) => void
 ): Promise<File> {
   const height = await withTimeout(
@@ -65,6 +90,10 @@ async function runCompression(
     METADATA_TIMEOUT_MS,
     "Tempo esgotado ao ler metadados do video"
   ).catch(() => 0);
+
+  const bitrateMbps = targetBitrateMbps(durationSeconds, maxTargetBytes);
+  const videoBitrateKbps = Math.round(bitrateMbps * 1000);
+  const maxHeight = bitrateMbps < 1 ? LOW_BITRATE_MAX_HEIGHT : MAX_HEIGHT;
 
   const ffmpeg = await loadFFmpeg();
   const { fetchFile } = await import("@ffmpeg/util");
@@ -79,18 +108,22 @@ async function runCompression(
   await ffmpeg.writeFile(inputName, await fetchFile(file));
 
   const args = ["-i", inputName];
-  if (height > MAX_HEIGHT) args.push("-vf", `scale=-2:${MAX_HEIGHT}`);
+  if (height > maxHeight) args.push("-vf", `scale=-2:${maxHeight}`);
   args.push(
     "-c:v",
     "libx264",
     "-preset",
     "veryfast",
-    "-crf",
-    "28",
+    "-b:v",
+    `${videoBitrateKbps}k`,
+    "-maxrate",
+    `${videoBitrateKbps}k`,
+    "-bufsize",
+    `${videoBitrateKbps * 2}k`,
     "-c:a",
     "aac",
     "-b:a",
-    "128k",
+    "96k",
     "-movflags",
     "+faststart",
     outputName
@@ -110,22 +143,25 @@ async function runCompression(
 }
 
 /**
- * Recomprime o video no navegador (ffmpeg.wasm) antes do upload, para
- * reduzir consumo de storage/banda no Supabase. Se o video ja for compacto,
- * se o navegador nao suportar WASM, se a compressao falhar ou demorar mais
- * que COMPRESSION_TIMEOUT_MS, retorna o arquivo original — nunca bloqueia o
- * envio por causa disso.
+ * Recomprime o video no navegador (ffmpeg.wasm) antes do upload, mirando
+ * caber em `maxTargetBytes` (nao so "menor", um TAMANHO especifico) — ver
+ * `targetBitrateMbps`. Se o video ja couber no limite, se o navegador nao
+ * suportar WASM, se a compressao falhar ou demorar mais que
+ * COMPRESSION_TIMEOUT_MS, retorna o arquivo original — nunca bloqueia o
+ * envio por causa disso (a checagem de tamanho final acontece depois, em
+ * hooks/use-upload.ts).
  */
 export async function compressVideo(
   file: File,
   durationSeconds: number,
+  maxTargetBytes: number,
   onProgress?: (ratio: number) => void
 ): Promise<File> {
-  if (isAlreadyCompact(file, durationSeconds)) return file;
+  if (isAlreadyCompact(file, maxTargetBytes)) return file;
 
   try {
     return await withTimeout(
-      runCompression(file, onProgress),
+      runCompression(file, durationSeconds, maxTargetBytes, onProgress),
       COMPRESSION_TIMEOUT_MS,
       "Tempo esgotado ao comprimir o video"
     );

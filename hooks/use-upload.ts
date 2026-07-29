@@ -44,8 +44,11 @@ export function useUpload(targetPlaylistId?: string) {
     setProgress(0);
     setError(null);
     try {
-      const compressedVideoFile = await compressVideo(input.videoFile, input.durationSeconds, (ratio) =>
-        setProgress(Math.round(ratio * 100))
+      const compressedVideoFile = await compressVideo(
+        input.videoFile,
+        input.durationSeconds,
+        UPLOAD_LIMITS.maxEffectiveVideoUploadBytes,
+        (ratio) => setProgress(Math.round(ratio * 100))
       );
 
       // O bucket em si permite ate 2GB, mas o plano atual do Supabase tem
