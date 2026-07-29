@@ -85,6 +85,22 @@ export function TunnelBackground() {
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
+    // Sem aceleracao real de GPU (driver bloqueado, maquina virtual sem
+    // passthrough, etc.) o navegador cai pro renderizador por software —
+    // nesse caso QUALQUER cena 3D fica pesada, nao importa quanto se
+    // simplifique a geometria. Em vez de arriscar travar a pagina, desiste
+    // cedo e mostra so o fundo escuro estatico (sem o efeito de tunel).
+    const gl = renderer.getContext();
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    const rendererName = debugInfo ? String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)) : "";
+    const isSoftwareRenderer = /swiftshader|llvmpipe|software|basic render driver/i.test(rendererName);
+    if (isSoftwareRenderer) {
+      canvas.style.display = "none";
+      frame.style.backgroundColor = BACKGROUND;
+      renderer.dispose();
+      return;
+    }
+
     const lineMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color(LINE_COLOR),
       transparent: true,
@@ -255,11 +271,67 @@ export function TunnelBackground() {
     ro.observe(frame);
     resize();
 
+    // Reduzir poligonos/desligar antialias so ajuda ate certo ponto — numa
+    // GPU integrada antiga (ex: Intel HD 4600, ~2013) mesmo a cena
+    // simplificada pode nao rodar liso, e o problema pode so aparecer
+    // depois de alguns segundos (outros apps disputando CPU/GPU, por
+    // exemplo). Por isso o monitoramento roda por toda a vida do
+    // componente, nao so no arranque: janela deslizante das ultimas
+    // FRAME_WINDOW amostras, reavaliada a cada frame.
+    const FRAME_WINDOW = 30;
+    const SLOW_FRAME_MS_THRESHOLD = 45; // ~22fps medio
+    const CATASTROPHIC_FRAME_MS = 350; // um unico frame assim ja indica trava real
+    const frameDurations: number[] = [];
+    let frameDurationSum = 0;
+
+    const fallBackToStatic = () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      // O buffer do canvas fica opaco com o ultimo frame desenhado (alpha:
+      // false) — esconder o canvas e pintar o fundo escuro solido no
+      // wrapper (nao no canvas: um background-color de canvas so aparece
+      // atras de pixels transparentes, e nao ha nenhum aqui) da o visual
+      // limpo de "sem tunel" em vez de deixar o ultimo frame congelado.
+      canvas.style.display = "none";
+      frame.style.backgroundColor = BACKGROUND;
+      ro.disconnect();
+      geoFloor.dispose();
+      geoWall.dispose();
+      geoTubeZ.dispose();
+      geoTubeX.dispose();
+      geoTubeY.dispose();
+      for (const m of colorMats) m.dispose();
+      for (const m of imageMats) {
+        m.map?.dispose();
+        m.dispose();
+      }
+      lineMaterial.dispose();
+      renderer.dispose();
+    };
+
     const animate = (now: number) => {
       if (!alive) return;
       raf = requestAnimationFrame(animate);
-      const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
+      const isFirstFrame = !last;
+      const rawMs = last ? now - last : 16;
+      const dt = last ? Math.min(rawMs / 1000, 1 / 30) : 1 / 60;
       last = now;
+
+      if (!isFirstFrame && !document.hidden) {
+        if (rawMs > CATASTROPHIC_FRAME_MS) {
+          fallBackToStatic();
+          return;
+        }
+        frameDurations.push(rawMs);
+        frameDurationSum += rawMs;
+        if (frameDurations.length > FRAME_WINDOW) {
+          frameDurationSum -= frameDurations.shift() as number;
+        }
+        if (frameDurations.length === FRAME_WINDOW && frameDurationSum / FRAME_WINDOW > SLOW_FRAME_MS_THRESHOLD) {
+          fallBackToStatic();
+          return;
+        }
+      }
 
       scrollPos += speedFactor;
 
@@ -292,10 +364,23 @@ export function TunnelBackground() {
     };
     raf = requestAnimationFrame(animate);
 
+    // Aba oculta (troca de aba, minimizado) faz o navegador suspender o
+    // rAF por conta propria — o que e o comportamento certo (economiza
+    // bateria/CPU), mas sem isso o PRIMEIRO frame ao voltar veria um
+    // intervalo gigante (minutos, quem sabe) e seria lido erroneamente
+    // como travamento real, desligando o tunel a toa. Zera a referencia
+    // de tempo ao voltar para nao confundir uma pausa legitima com
+    // renderizacao lenta.
+    const onVisibilityChange = () => {
+      if (!document.hidden) last = 0;
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
 
       geoFloor.dispose();
       geoWall.dispose();
