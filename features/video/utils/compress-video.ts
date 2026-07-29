@@ -15,19 +15,26 @@ const MIN_TARGET_BITRATE_MBPS = 0.4;
 // de cena, overhead de container/audio) — essa margem evita passar do
 // limite por pouco depois de todo o trabalho de comprimir.
 const SIZE_SAFETY_MARGIN = 0.85;
-const MAX_HEIGHT = 720;
-const LOW_BITRATE_MAX_HEIGHT = 480; // resolucao menor rende mais qualidade por bit quando o alvo e baixo
+// Resolucao menor = menos pixel pra codificar = compressao mais rapida (o
+// bitrate ja controla o tamanho final, entao resolucao mais baixa aqui e
+// principalmente uma questao de VELOCIDADE, nao so qualidade por bit).
+// Visto ao vivo: video real de ~54MB estourou um prazo de 5 minutos com
+// menos da metade codificada — precisava andar mais rapido, nao so ter
+// mais tempo.
+const MAX_HEIGHT = 540;
+const LOW_BITRATE_MAX_HEIGHT = 360;
 
 // Qualquer etapa aqui (ler metadados do video, baixar o ffmpeg.wasm de um
 // CDN externo, codificar) pode travar sem nunca rejeitar a Promise — sem um
 // limite de tempo global, o upload inteiro fica preso em "Comprimindo
 // video... 0%" para sempre, com o usuario sem conseguir enviar nada. Video
-// de verdade (varios minutos) pode legitimamente levar mais que um minuto
-// pra codificar em WASM (bem mais lento que codigo nativo) — o prazo
-// precisa ser generoso o bastante pra deixar isso terminar de verdade, nao
-// so cair no fallback do arquivo original (que agora, com o teto de upload
-// do plano atual, tem boa chance de nem caber).
-const COMPRESSION_TIMEOUT_MS = 5 * 60_000;
+// de verdade (varios minutos) pode legitimamente levar bem mais que isso
+// pra codificar em WASM (bem mais lento que codigo nativo, roda num so
+// nucleo) — o prazo precisa ser generoso o bastante pra deixar isso
+// terminar de verdade, nao so cair no fallback do arquivo original (que
+// agora, com o teto de upload do plano atual, tem boa chance de nem
+// caber).
+const COMPRESSION_TIMEOUT_MS = 12 * 60_000;
 const METADATA_TIMEOUT_MS = 8_000;
 
 let ffmpegPromise: Promise<FFmpeg> | null = null;
@@ -112,8 +119,12 @@ async function runCompression(
   args.push(
     "-c:v",
     "libx264",
+    // "ultrafast" em vez de "veryfast": produz arquivo um pouco menos
+    // eficiente pro mesmo bitrate, mas o bitrate alvo ja controla o
+    // tamanho final — o ganho real aqui e velocidade de codificacao, que
+    // e o que realmente faltava (video real estourando o prazo).
     "-preset",
-    "veryfast",
+    "ultrafast",
     "-b:v",
     `${videoBitrateKbps}k`,
     "-maxrate",
