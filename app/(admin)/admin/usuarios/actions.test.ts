@@ -48,14 +48,14 @@ describe("deleteUser", () => {
     const client = createMockSupabaseClient(null);
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID)).rejects.toThrow("Sessão expirada");
+    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Sessão expirada");
   });
 
   it("recusa remover a própria conta", async () => {
     const client = createMockSupabaseClient({ id: "admin-1" });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser("admin-1")).rejects.toThrow("não pode remover sua própria conta");
+    await expect(deleteUser("admin-1", "senha123")).rejects.toThrow("não pode remover sua própria conta");
     expect(client.rpc).not.toHaveBeenCalled();
   });
 
@@ -64,7 +64,24 @@ describe("deleteUser", () => {
     client.rpc.mockResolvedValue({ data: false, error: null });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID)).rejects.toThrow("Apenas administradores podem remover contas");
+    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Apenas administradores podem remover contas");
+  });
+
+  it("recusa sem senha de confirmação", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(deleteUser(OTHER_USER_ID, "")).rejects.toThrow("Digite sua senha");
+  });
+
+  it("recusa quando a senha de confirmação está incorreta", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1", email: "admin@contas.studiokids.internal" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    client.auth.signInWithPassword.mockResolvedValue({ data: null, error: { message: "invalid" } });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(deleteUser(OTHER_USER_ID, "senha-errada")).rejects.toThrow("Senha incorreta");
   });
 
   it("apaga a conta via service role quando autorizado", async () => {
@@ -77,7 +94,7 @@ describe("deleteUser", () => {
       auth: { admin: { deleteUser: deleteUserAdmin } },
     } as never);
 
-    await deleteUser(OTHER_USER_ID);
+    await deleteUser(OTHER_USER_ID, "senha123");
 
     expect(deleteUserAdmin).toHaveBeenCalledWith(OTHER_USER_ID);
   });
@@ -92,6 +109,6 @@ describe("deleteUser", () => {
       auth: { admin: { deleteUser: deleteUserAdmin } },
     } as never);
 
-    await expect(deleteUser(OTHER_USER_ID)).rejects.toThrow("Falha ao remover conta");
+    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Falha ao remover conta");
   });
 });

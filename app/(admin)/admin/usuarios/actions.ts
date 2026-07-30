@@ -17,8 +17,12 @@ export async function updateUserRole(userId: string, role: UserRole) {
  * videos, comentarios, etc. Precisa da service role porque apagar um
  * usuario de autenticacao so e possivel pela Admin API, nao por uma
  * query comum na tabela profiles.
+ *
+ * Exige a senha do proprio admin antes de apagar — acao irreversivel
+ * (remove tudo em cascata), um simples confirm() do navegador nao
+ * protege contra clique acidental.
  */
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string, confirmPassword: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,6 +32,13 @@ export async function deleteUser(userId: string) {
 
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
   if (roleError || !isAdmin) throw new Error("Apenas administradores podem remover contas.");
+
+  if (!confirmPassword) throw new Error("Digite sua senha para confirmar.");
+  const { error: passwordError } = await supabase.auth.signInWithPassword({
+    email: user.email ?? "",
+    password: confirmPassword,
+  });
+  if (passwordError) throw new Error("Senha incorreta.");
 
   const admin = createServiceRoleClient();
   const { error } = await admin.auth.admin.deleteUser(userId);

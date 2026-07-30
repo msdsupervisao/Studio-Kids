@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { signIn, signUp, type AuthActionState } from "@/features/auth/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const initialState: AuthActionState = {};
@@ -71,7 +73,12 @@ export function LoginForm() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Senha</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Senha</Label>
+              <Link href={ROUTES.forgotPassword} className="focus-ring text-xs font-medium text-primary hover:underline">
+                Esqueci minha senha
+              </Link>
+            </div>
             <PasswordInput id="password" name="password" required autoComplete="current-password" />
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}

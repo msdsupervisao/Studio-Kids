@@ -4,7 +4,17 @@ import { useMemo, useState, useTransition } from "react";
 import { Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateUserRole, deleteUser } from "./actions";
 import type { Profile, UserRole } from "@/types/user.types";
@@ -68,6 +78,8 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
   const [role, setRole] = useState(user.role);
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   function handleChange(nextRole: UserRole) {
     const previousRole = role;
@@ -83,18 +95,13 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
     });
   }
 
-  function handleDelete() {
-    if (
-      !confirm(
-        `Remover a conta de @${user.username}? Isso apaga o perfil, canais, vídeos e comentários dessa conta permanentemente. Essa ação não pode ser desfeita.`
-      )
-    ) {
-      return;
-    }
+  function handleConfirmDelete(event: React.FormEvent) {
+    event.preventDefault();
     startDeleteTransition(async () => {
       try {
-        await deleteUser(user.id);
+        await deleteUser(user.id, confirmPassword);
         toast.success("Conta removida");
+        setDeleteDialogOpen(false);
         onDeleted();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Falha ao remover conta");
@@ -127,15 +134,55 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
             ))}
           </SelectContent>
         </Select>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={isDeleting || isSelf}
-          title={isSelf ? "Você não pode remover sua própria conta" : undefined}
-          className="focus-ring flex items-center gap-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) setConfirmPassword("");
+          }}
         >
-          <Trash2 className="h-4 w-4" />
-        </button>
+          <button
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={isSelf}
+            title={isSelf ? "Você não pode remover sua própria conta" : undefined}
+            className="focus-ring flex items-center gap-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remover conta de @{user.username}?</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Isso apaga o perfil, canais, vídeos e comentários dessa conta permanentemente. Essa ação não pode ser
+                desfeita. Digite sua senha para confirmar.
+              </p>
+            </DialogHeader>
+            <form onSubmit={handleConfirmDelete} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor={`confirm-password-${user.id}`}>Sua senha</Label>
+                <PasswordInput
+                  id={`confirm-password-${user.id}`}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost">
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button type="submit" variant="destructive" disabled={isDeleting || !confirmPassword}>
+                  {isDeleting ? "Removendo..." : "Remover conta"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </li>
   );

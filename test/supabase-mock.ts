@@ -58,6 +58,7 @@ export function createMockSupabaseClient(user: MockUser | null = { id: "user-1" 
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
+      signInWithPassword: vi.fn().mockResolvedValue({ data: { user }, error: null }),
     },
     from: vi.fn(),
     rpc: vi.fn(),
