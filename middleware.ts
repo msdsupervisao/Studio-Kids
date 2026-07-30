@@ -6,6 +6,17 @@ const PUBLIC_PATHS = [ROUTES.login, ROUTES.forgotPassword];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Janela de manutencao pra migrar o armazenamento de video pra outro
+  // provedor — liga/desliga so com a env var, sem precisar de deploy pra
+  // reverter em cima da hora. Curto-circuita antes de tocar no Supabase de
+  // proposito: continua funcionando mesmo se o problema do momento for o
+  // proprio Supabase.
+  if (process.env.MAINTENANCE_MODE === "true") {
+    if (pathname === ROUTES.maintenance) return NextResponse.next();
+    return NextResponse.redirect(new URL(ROUTES.maintenance, request.url));
+  }
+
   const { supabase, supabaseResponse, user } = await updateSession(request);
 
   const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));

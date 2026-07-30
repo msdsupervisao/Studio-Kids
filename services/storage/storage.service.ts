@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { STORAGE_BUCKETS } from "@/lib/constants";
+import { STORAGE_BUCKETS, STORAGE_PROVIDER } from "@/lib/constants";
+import { createR2UploadUrl, deleteR2UploadedObjects } from "@/services/storage/storage.actions";
 import { withTimeout } from "@/utils/with-timeout";
 import type { Database } from "@/types/database.types";
 
@@ -76,14 +77,69 @@ function uploadFileViaXhr(
   });
 }
 
+// --- Cloudflare R2 -----------------------------------------------------
+// R2 nao tem SDK client-side nem RLS — a URL assinada de PUT vem de um
+// server action (storage.actions.ts) que checa login antes de gerar,
+// depois o navegador envia o arquivo direto pro R2 (mesmo padrao XHR
+// usado com o Supabase). So entra em uso quando STORAGE_PROVIDER === "r2".
+
+async function uploadR2(bucket: Bucket, path: string, file: File): Promise<string> {
+  const uploadUrl = await createR2UploadUrl(bucket, path, file.type || "application/octet-stream");
+  const response = await withTimeout(
+    fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "content-type": file.type || "application/octet-stream" },
+      body: file,
+    }),
+    uploadTimeoutMs(file.size),
+    "O envio demorou demais e foi interrompido — verifique sua conexão e tente novamente."
+  );
+  if (!response.ok) throw new Error(`Falha ao enviar arquivo para ${bucket}/${path}: HTTP ${response.status}`);
+  return path;
+}
+
+async function uploadWithProgressR2(
+  bucket: Bucket,
+  path: string,
+  file: File,
+  onProgress?: (fraction: number) => void
+): Promise<string> {
+  if (typeof XMLHttpRequest === "undefined") return uploadR2(bucket, path, file);
+
+  try {
+    const uploadUrl = await createR2UploadUrl(bucket, path, file.type || "application/octet-stream");
+    await uploadFileViaXhr(uploadUrl, file, { "content-type": file.type || "application/octet-stream" }, onProgress);
+    return path;
+  } catch (err) {
+    console.error(
+      `[storage] envio com progresso falhou para ${bucket}/${path}, tentando metodo antigo sem progresso:`,
+      err
+    );
+    return uploadR2(bucket, path, file);
+  }
+}
+
+function getPublicUrlR2(bucket: Bucket, path: string | null): string | null {
+  if (!path) return null;
+  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+  if (!base) throw new Error("R2 não configurado — defina NEXT_PUBLIC_R2_PUBLIC_URL no .env.");
+  return `${base.replace(/\/$/, "")}/${bucket}/${path}`;
+}
+
+async function removeR2(bucket: Bucket, paths: string[]): Promise<void> {
+  await deleteR2UploadedObjects(bucket, paths);
+}
+
 /**
- * Isola toda a interacao com Supabase Storage atras de uma interface
- * simples. Se no futuro o armazenamento migrar (ex: bucket privado +
- * signed URLs, ou outro provedor), so este arquivo muda — nenhuma
- * feature depende diretamente do SDK do Supabase Storage.
+ * Isola toda a interacao com o armazenamento de arquivos atras de uma
+ * interface simples — cada operacao despacha pro provedor ativo
+ * (STORAGE_PROVIDER, ver lib/constants.ts). Nenhuma feature depende
+ * diretamente do SDK do Supabase Storage nem do R2.
  */
 export function createStorageService(supabase: SupabaseClient<Database>) {
   async function upload(bucket: Bucket, path: string, file: File) {
+    if (STORAGE_PROVIDER === "r2") return uploadR2(bucket, path, file);
+
     const { error } = await withTimeout(
       supabase.storage.from(bucket).upload(path, file, {
         cacheControl: "3600",
@@ -119,6 +175,8 @@ export function createStorageService(supabase: SupabaseClient<Database>) {
     file: File,
     onProgress?: (fraction: number) => void
   ) {
+    if (STORAGE_PROVIDER === "r2") return uploadWithProgressR2(bucket, path, file, onProgress);
+
     if (typeof XMLHttpRequest === "undefined") {
       return upload(bucket, path, file);
     }
@@ -151,11 +209,14 @@ export function createStorageService(supabase: SupabaseClient<Database>) {
 
   function getPublicUrl(bucket: Bucket, path: string | null): string | null {
     if (!path) return null;
+    if (STORAGE_PROVIDER === "r2") return getPublicUrlR2(bucket, path);
     return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
   }
 
   async function remove(bucket: Bucket, paths: string[]) {
     if (paths.length === 0) return;
+    if (STORAGE_PROVIDER === "r2") return removeR2(bucket, paths);
+
     const { error } = await supabase.storage.from(bucket).remove(paths);
     if (error) throw new Error(`Falha ao remover arquivos de ${bucket}: ${error.message}`);
   }

@@ -10,6 +10,7 @@ export const ROUTES = {
   search: "/pesquisa",
   login: "/login",
   forgotPassword: "/esqueci-senha",
+  maintenance: "/manutencao",
   firstAccess: "/primeiro-acesso",
   profile: "/perfil",
   settings: "/configuracoes",
@@ -71,3 +72,14 @@ export const STORAGE_BUCKETS = {
   banners: "banners",
   postImages: "post-images",
 } as const;
+
+/**
+ * Qual provedor guarda os arquivos enviados (video, miniatura, avatar...).
+ * "supabase" (padrao) usa o Supabase Storage de sempre; "r2" usa Cloudflare
+ * R2 (ver services/storage/r2.ts) — trocar so muda esta env var + as
+ * credenciais do R2 no .env, nenhum outro codigo precisa mudar. Publica
+ * (NEXT_PUBLIC_) porque o navegador precisa saber pra onde mandar o
+ * arquivo direto (upload nao passa pelo nosso servidor).
+ */
+export const STORAGE_PROVIDER: "supabase" | "r2" =
+  process.env.NEXT_PUBLIC_STORAGE_PROVIDER === "r2" ? "r2" : "supabase";
