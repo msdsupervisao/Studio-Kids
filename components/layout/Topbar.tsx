@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Bell, LayoutDashboard, LogOut, Menu, Plus, Search, Settings, Shield, Tv, Upload, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,10 +36,18 @@ export function Topbar({
   wallpaper?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useUser(initialUser);
   const { notifications, unreadCount } = useNotifications();
   const { toggle: toggleSidebar } = useSidebar();
   const [query, setQuery] = useState("");
+
+  // Em /admin/usuarios ja existe um campo de busca proprio, que filtra as
+  // contas na hora (ver UserManager.tsx) — essa busca global so pesquisa
+  // videos/canais/playlists, entao digitar o nome de um aluno ali sempre
+  // levava pra uma tela de video vazia. Escondida aqui pra nao ter duas
+  // caixas de busca parecidas fazendo coisas diferentes na mesma tela.
+  const hideSearch = pathname?.startsWith(ROUTES.adminUsers) ?? false;
 
   function runSearch(value: string) {
     const trimmed = value.trim();
@@ -98,26 +106,30 @@ export function Topbar({
         <span className="hidden text-base font-semibold tracking-tight sm:inline">{APP_NAME}</span>
       </Link>
 
-      <form onSubmit={handleSearch} className="mx-auto flex w-full min-w-0 max-w-xl items-center">
-        <div className="flex w-full min-w-0">
-          <Input
-            name="q"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Pesquisar aulas, canais..."
-            aria-label="Pesquisar"
-            className="min-w-0 rounded-l-full rounded-r-none border-r-0 focus-visible:z-10"
-          />
-          <button
-            type="submit"
-            aria-label="Pesquisar"
-            className="focus-ring flex w-14 shrink-0 items-center justify-center rounded-r-full border border-l-0 border-input bg-secondary text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
-        <VoiceSearchButton onResult={handleVoiceResult} />
-      </form>
+      {hideSearch ? (
+        <div className="mx-auto w-full max-w-xl" />
+      ) : (
+        <form onSubmit={handleSearch} className="mx-auto flex w-full min-w-0 max-w-xl items-center">
+          <div className="flex w-full min-w-0">
+            <Input
+              name="q"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Pesquisar aulas, canais..."
+              aria-label="Pesquisar"
+              className="min-w-0 rounded-l-full rounded-r-none border-r-0 focus-visible:z-10"
+            />
+            <button
+              type="submit"
+              aria-label="Pesquisar"
+              className="focus-ring flex w-14 shrink-0 items-center justify-center rounded-r-full border border-l-0 border-input bg-secondary text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
+          <VoiceSearchButton onResult={handleVoiceResult} />
+        </form>
+      )}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {canUpload && (
