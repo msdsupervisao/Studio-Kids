@@ -8,7 +8,7 @@ vi.mock("@/services/supabase/server", () => ({
 }));
 
 const { createClient, createServiceRoleClient } = await import("@/services/supabase/server");
-const { updateUserRole, deleteUser } = await import("./actions");
+const { updateUserRole, deleteUser, resetUserPassword } = await import("./actions");
 
 const OTHER_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -110,5 +110,75 @@ describe("deleteUser", () => {
     } as never);
 
     await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Falha ao remover conta");
+  });
+});
+
+describe("resetUserPassword", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("recusa quando ninguém está logado", async () => {
+    const client = createMockSupabaseClient(null);
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow("Sessão expirada");
+  });
+
+  it("recusa quando quem chama não é admin", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1" });
+    client.rpc.mockResolvedValue({ data: false, error: null });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow(
+      "Apenas administradores podem redefinir senhas"
+    );
+  });
+
+  it("recusa senha nova fraca", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(resetUserPassword(OTHER_USER_ID, "curta", "senha123")).rejects.toThrow("Mínimo de 8 caracteres");
+  });
+
+  it("recusa quando a senha do admin está incorreta", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1", email: "admin@contas.studiokids.internal" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    client.auth.signInWithPassword.mockResolvedValue({ data: null, error: { message: "invalid" } });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha-errada")).rejects.toThrow("Senha incorreta");
+  });
+
+  it("redefine a senha via service role quando autorizado", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1", email: "admin@contas.studiokids.internal" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    const updateUserById = vi.fn().mockResolvedValue({ data: {}, error: null });
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      auth: { admin: { updateUserById } },
+    } as never);
+
+    await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
+
+    expect(updateUserById).toHaveBeenCalledWith(OTHER_USER_ID, { password: "SenhaNova1" });
+  });
+
+  it("propaga erro da Admin API", async () => {
+    const client = createMockSupabaseClient({ id: "admin-1", email: "admin@contas.studiokids.internal" });
+    client.rpc.mockResolvedValue({ data: true, error: null });
+    vi.mocked(createClient).mockResolvedValue(client as never);
+
+    const updateUserById = vi.fn().mockResolvedValue({ data: null, error: { message: "falhou" } });
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      auth: { admin: { updateUserById } },
+    } as never);
+
+    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow(
+      "Falha ao redefinir senha"
+    );
   });
 });

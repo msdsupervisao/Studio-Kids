@@ -7,7 +7,7 @@ export const usernameSchema = z
   .max(30, "Máximo de 30 caracteres")
   .regex(/^[a-z0-9_.]+$/, "Use apenas letras minúsculas, números, ponto e underline");
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, "Mínimo de 8 caracteres")
   .regex(/[A-Z]/, "Inclua ao menos uma letra maiúscula")

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { KeyRound, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { updateUserRole, deleteUser } from "./actions";
+import { updateUserRole, deleteUser, resetUserPassword } from "./actions";
 import type { Profile, UserRole } from "@/types/user.types";
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -80,6 +80,10 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
   const [isDeleting, startDeleteTransition] = useTransition();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResetting, startResetTransition] = useTransition();
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
 
   function handleChange(nextRole: UserRole) {
     const previousRole = role;
@@ -109,6 +113,21 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
     });
   }
 
+  function handleConfirmReset(event: React.FormEvent) {
+    event.preventDefault();
+    startResetTransition(async () => {
+      try {
+        await resetUserPassword(user.id, newPassword, resetConfirmPassword);
+        toast.success(`Senha de @${user.username} redefinida`);
+        setResetDialogOpen(false);
+        setNewPassword("");
+        setResetConfirmPassword("");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Falha ao redefinir senha");
+      }
+    });
+  }
+
   return (
     <li className="flex items-center justify-between gap-4 p-3">
       <div className="flex items-center gap-3">
@@ -134,6 +153,70 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
             ))}
           </SelectContent>
         </Select>
+        <Dialog
+          open={resetDialogOpen}
+          onOpenChange={(open) => {
+            setResetDialogOpen(open);
+            if (!open) {
+              setNewPassword("");
+              setResetConfirmPassword("");
+            }
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setResetDialogOpen(true)}
+            title="Redefinir senha"
+            className="focus-ring flex items-center gap-1 rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <KeyRound className="h-4 w-4" />
+          </button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Redefinir senha de @{user.username}</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Contas usam nome de usuário, não e-mail de verdade — &quot;esqueci minha senha&quot; por e-mail não
+                funciona para @{user.username}. Defina uma nova senha e avise a pessoa. Digite sua senha para
+                confirmar.
+              </p>
+            </DialogHeader>
+            <form onSubmit={handleConfirmReset} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor={`new-password-${user.id}`}>Nova senha de @{user.username}</Label>
+                <PasswordInput
+                  id={`new-password-${user.id}`}
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  autoComplete="new-password"
+                  autoFocus
+                  minLength={8}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, 1 maiúscula e 1 número.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={`reset-confirm-password-${user.id}`}>Sua senha</Label>
+                <PasswordInput
+                  id={`reset-confirm-password-${user.id}`}
+                  value={resetConfirmPassword}
+                  onChange={(event) => setResetConfirmPassword(event.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost">
+                    Cancelar
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={isResetting || !newPassword || !resetConfirmPassword}>
+                  {isResetting ? "Salvando..." : "Redefinir senha"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={deleteDialogOpen}
           onOpenChange={(open) => {
