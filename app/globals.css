@@ -213,6 +213,89 @@
   --destructive-foreground: oklch(0.98 0.01 25);
 }
 
+/*
+ * Fallback pra navegador que nao entende oklch() (ex: Chrome mais antigo,
+ * comum em computador de escola que nao atualiza sozinho) — sem isso, o
+ * navegador trata a declaracao inteira como invalida e o texto renderiza
+ * sem cor nenhuma (some, so aparece ao selecionar). Repete as mesmas
+ * variaveis em hex, aproximando visualmente as cores oklch originais;
+ * so entra em vigor quando oklch() de fato nao e suportado, entao nao
+ * afeta em nada o navegador atualizado.
+ */
+@supports not (color: oklch(1 0 0)) {
+  :root {
+    --background: #fcfbfe;
+    --foreground: #201f29;
+    --card: #ffffff;
+    --card-foreground: #201f29;
+    --popover: #ffffff;
+    --popover-foreground: #201f29;
+    --primary: #4c3aa8;
+    --primary-foreground: #faf9fe;
+    --secondary: #f1f0f4;
+    --secondary-foreground: #2c2b35;
+    --muted: #f1f0f3;
+    --muted-foreground: #7c7a85;
+    --accent: #d9a44a;
+    --accent-foreground: #332a1a;
+    --success: #4fa26c;
+    --success-foreground: #f5fbf6;
+    --destructive: #d0453f;
+    --destructive-foreground: #fef5f5;
+    --border: #e2e1e6;
+    --input: #e2e1e6;
+    --ring: #4c3aa8;
+    --sidebar: #fcfbfe;
+    --sidebar-foreground: #201f29;
+    --sidebar-border: #e6e5ea;
+  }
+
+  .dark {
+    --background: #201f28;
+    --foreground: #f3f2f5;
+    --card: #2a2933;
+    --card-foreground: #f3f2f5;
+    --popover: #2a2933;
+    --popover-foreground: #f3f2f5;
+    --primary: #9b86e8;
+    --primary-foreground: #211f2e;
+    --secondary: #363543;
+    --secondary-foreground: #efeef2;
+    --muted: #363543;
+    --muted-foreground: #a9a7b0;
+    --accent: #e0b667;
+    --accent-foreground: #332a1a;
+    --success: #5fca82;
+    --success-foreground: #12281a;
+    --destructive: #e2685f;
+    --destructive-foreground: #2b100d;
+    --border: rgba(75, 73, 87, 0.6);
+    --input: rgba(75, 73, 87, 0.6);
+    --ring: #9b86e8;
+    --sidebar: #24232c;
+    --sidebar-foreground: #f3f2f5;
+    --sidebar-border: #46444f;
+  }
+
+  .force-light-theme {
+    --background: #fcfbfe;
+    --foreground: #201f29;
+    --card: #ffffff;
+    --card-foreground: #201f29;
+    --primary: #4c3aa8;
+    --primary-foreground: #faf9fe;
+    --secondary: #f1f0f4;
+    --secondary-foreground: #2c2b35;
+    --muted: #f1f0f3;
+    --muted-foreground: #7c7a85;
+    --border: #e2e1e6;
+    --input: #e2e1e6;
+    --ring: #4c3aa8;
+    --destructive: #d0453f;
+    --destructive-foreground: #fef5f5;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
