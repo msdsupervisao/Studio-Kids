@@ -140,6 +140,13 @@
   --sidebar: oklch(0.99 0.002 285);
   --sidebar-foreground: oklch(0.19 0.015 285);
   --sidebar-border: oklch(0.92 0.008 285);
+
+  /* Tinta sobre a foto de fundo do topbar (topbar-lab.png) — no claro,
+     55% de um fundo quase branco ja garante contraste pro texto escuro.
+     Ver .dark abaixo: no escuro precisa de bem mais opacidade, senao a
+     foto (bem clara) continua aparecendo por baixo do texto CLARO do
+     tema escuro, e as letras somem. */
+  --topbar-overlay-opacity: 0.55;
 }
 
 .dark {
@@ -177,6 +184,8 @@
   --sidebar: oklch(0.18 0.013 285);
   --sidebar-foreground: oklch(0.96 0.005 285);
   --sidebar-border: oklch(0.3 0.015 285);
+
+  --topbar-overlay-opacity: 0.85;
 }
 
 /*

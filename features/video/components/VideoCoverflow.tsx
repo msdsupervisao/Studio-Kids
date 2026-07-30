@@ -115,7 +115,7 @@ function VideoCoverCard({
         )}
         <motion.div
           style={{ opacity: detailsOpacity }}
-          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-3 pt-10"
+          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-3 pt-10 text-center"
         >
           <p className="line-clamp-1 text-sm font-semibold text-white">{video.title}</p>
           <p className="text-xs text-white/80">

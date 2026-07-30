@@ -75,7 +75,10 @@ export function Topbar({
             sizes="100vw"
             className="object-cover object-[center_48%]"
           />
-          <div className="absolute inset-0 bg-background/55 backdrop-blur-[1px]" />
+          <div
+            className="absolute inset-0 backdrop-blur-[1px]"
+            style={{ backgroundColor: "var(--background)", opacity: "var(--topbar-overlay-opacity)" }}
+          />
         </div>
       )}
       <Button

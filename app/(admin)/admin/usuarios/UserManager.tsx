@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateUserRole, deleteUser } from "./actions";
 import type { Profile, UserRole } from "@/types/user.types";
@@ -16,18 +17,46 @@ const ROLE_LABEL: Record<UserRole, string> = {
 
 export function UserManager({ users, currentUserId }: { users: Profile[]; currentUserId: string | null }) {
   const [rows, setRows] = useState(users);
+  const [query, setQuery] = useState("");
+
+  const filteredRows = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter(
+      (user) => user.full_name.toLowerCase().includes(term) || user.username.toLowerCase().includes(term)
+    );
+  }, [rows, query]);
 
   return (
-    <ul className="divide-y divide-border rounded-xl border border-border">
-      {rows.map((user) => (
-        <UserRow
-          key={user.id}
-          user={user}
-          isSelf={user.id === currentUserId}
-          onDeleted={() => setRows((current) => current.filter((row) => row.id !== user.id))}
+    <div className="space-y-4">
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Pesquisar por nome ou usuário..."
+          aria-label="Pesquisar contas"
+          className="pl-9"
         />
-      ))}
-    </ul>
+      </div>
+
+      {filteredRows.length === 0 ? (
+        <p className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
+          Nenhuma conta encontrada para &quot;{query}&quot;
+        </p>
+      ) : (
+        <ul className="divide-y divide-border rounded-xl border border-border">
+          {filteredRows.map((user) => (
+            <UserRow
+              key={user.id}
+              user={user}
+              isSelf={user.id === currentUserId}
+              onDeleted={() => setRows((current) => current.filter((row) => row.id !== user.id))}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
