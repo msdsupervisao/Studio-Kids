@@ -79,11 +79,10 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmUsername, setConfirmUsername] = useState("");
   const [isResetting, startResetTransition] = useTransition();
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
 
   function handleChange(nextRole: UserRole) {
     const previousRole = role;
@@ -102,7 +101,7 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
   function handleConfirmDelete(event: React.FormEvent) {
     event.preventDefault();
     startDeleteTransition(async () => {
-      const result = await deleteUser(user.id, confirmPassword);
+      const result = await deleteUser(user.id, confirmUsername);
       if (result.error) {
         toast.error(result.error);
         return;
@@ -116,7 +115,7 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
   function handleConfirmReset(event: React.FormEvent) {
     event.preventDefault();
     startResetTransition(async () => {
-      const result = await resetUserPassword(user.id, newPassword, resetConfirmPassword);
+      const result = await resetUserPassword(user.id, newPassword);
       if (result.error) {
         toast.error(result.error);
         return;
@@ -124,7 +123,6 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
       toast.success(`Senha de @${user.username} redefinida`);
       setResetDialogOpen(false);
       setNewPassword("");
-      setResetConfirmPassword("");
     });
   }
 
@@ -157,10 +155,7 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
           open={resetDialogOpen}
           onOpenChange={(open) => {
             setResetDialogOpen(open);
-            if (!open) {
-              setNewPassword("");
-              setResetConfirmPassword("");
-            }
+            if (!open) setNewPassword("");
           }}
         >
           <button
@@ -180,23 +175,6 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
               </p>
             </DialogHeader>
             <form onSubmit={handleConfirmReset} className="space-y-4">
-              <div className="space-y-1.5 rounded-lg border border-border bg-secondary/50 p-3">
-                <Label htmlFor={`reset-confirm-password-${user.id}`}>
-                  Sua senha de admin{" "}
-                  <span className="font-normal text-muted-foreground">(pra confirmar que é você)</span>
-                </Label>
-                <PasswordInput
-                  id={`reset-confirm-password-${user.id}`}
-                  value={resetConfirmPassword}
-                  onChange={(event) => setResetConfirmPassword(event.target.value)}
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  A senha que <strong>você</strong> usa pra entrar — não a senha nova de @{user.username} abaixo.
-                </p>
-              </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`new-password-${user.id}`}>Nova senha de @{user.username}</Label>
                 <PasswordInput
@@ -204,24 +182,19 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   autoComplete="new-password"
+                  autoFocus
                   minLength={8}
                   required
                 />
                 <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, 1 maiúscula e 1 número.</p>
               </div>
-              {newPassword && resetConfirmPassword && newPassword === resetConfirmPassword && (
-                <p className="text-sm text-destructive">
-                  Os dois campos estão iguais — isso costuma ser engano (repetiram a senha nova ali em cima em vez da
-                  sua senha de admin). Confira antes de continuar.
-                </p>
-              )}
               <div className="flex justify-end gap-2">
                 <DialogClose asChild>
                   <Button type="button" variant="ghost">
                     Cancelar
                   </Button>
                 </DialogClose>
-                <Button type="submit" disabled={isResetting || !newPassword || !resetConfirmPassword}>
+                <Button type="submit" disabled={isResetting || !newPassword}>
                   {isResetting ? "Salvando..." : "Redefinir senha"}
                 </Button>
               </div>
@@ -232,7 +205,7 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
           open={deleteDialogOpen}
           onOpenChange={(open) => {
             setDeleteDialogOpen(open);
-            if (!open) setConfirmPassword("");
+            if (!open) setConfirmUsername("");
           }}
         >
           <button
@@ -249,18 +222,21 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
               <DialogTitle>Remover conta de @{user.username}?</DialogTitle>
               <p className="text-sm text-muted-foreground">
                 Isso apaga o perfil, canais, vídeos e comentários dessa conta permanentemente. Essa ação não pode ser
-                desfeita. Digite sua senha para confirmar.
+                desfeita.
               </p>
             </DialogHeader>
             <form onSubmit={handleConfirmDelete} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor={`confirm-password-${user.id}`}>Sua senha</Label>
-                <PasswordInput
-                  id={`confirm-password-${user.id}`}
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  autoComplete="current-password"
+                <Label htmlFor={`confirm-username-${user.id}`}>
+                  Digite <strong>{user.username}</strong> para confirmar
+                </Label>
+                <Input
+                  id={`confirm-username-${user.id}`}
+                  value={confirmUsername}
+                  onChange={(event) => setConfirmUsername(event.target.value)}
+                  placeholder={user.username}
                   autoFocus
+                  autoComplete="off"
                   required
                 />
               </div>
@@ -270,7 +246,11 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
                     Cancelar
                   </Button>
                 </DialogClose>
-                <Button type="submit" variant="destructive" disabled={isDeleting || !confirmPassword}>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={isDeleting || confirmUsername.trim().toLowerCase() !== user.username.toLowerCase()}
+                >
                   {isDeleting ? "Removendo..." : "Remover conta"}
                 </Button>
               </div>

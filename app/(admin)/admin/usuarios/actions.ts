@@ -4,10 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient, createServiceRoleClient } from "@/services/supabase/server";
 import { passwordSchema } from "@/lib/validations";
 import { ROUTES } from "@/lib/constants";
-import type { User } from "@supabase/supabase-js";
 import type { UserRole } from "@/types/user.types";
-
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 export interface AdminActionResult {
   error?: string;
@@ -25,37 +22,20 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<Ad
 }
 
 /**
- * Reautentica o admin logado com a senha digitada no dialogo — barreira
- * extra antes de uma acao irreversivel (apagar conta) ou sensivel
- * (definir a senha de outra pessoa). Um simples confirm() do navegador
- * nao protege contra clique acidental nem prova que quem esta na frente
- * da tela ainda e o admin (sessao pode ter ficado aberta na sala).
- *
- * Retorna a mensagem de erro em vez de lancar excecao — Server Actions
- * chamadas como funcao comum (nao via <form action>) tem a mensagem de
- * qualquer erro LANCADO escondida pelo Next.js em producao (vira "An
- * error occurred in the Server Components render..." sem pista nenhuma
- * do motivo real, mesmo pra erro esperado tipo senha errada). Retornar
- * como dado normal evita esse problema inteiramente.
- */
-async function verifyAdminPassword(
-  supabase: SupabaseServerClient,
-  user: User,
-  confirmPassword: string
-): Promise<string | null> {
-  if (!confirmPassword) return "Digite sua senha para confirmar.";
-  const { error } = await supabase.auth.signInWithPassword({ email: user.email ?? "", password: confirmPassword });
-  if (error) return "Senha incorreta.";
-  return null;
-}
-
-/**
  * Apaga a conta (auth.users) — a cascata de FKs remove profile, canais,
  * videos, comentarios, etc. Precisa da service role porque apagar um
  * usuario de autenticacao so e possivel pela Admin API, nao por uma
  * query comum na tabela profiles.
+ *
+ * Confirmacao e digitar o @usuario da conta (nao a senha de ninguem) —
+ * a versao anterior pedia a senha do proprio admin como barreira extra,
+ * mas na pratica confundia com o campo de senha nova ao lado (visto ao
+ * vivo: admin digitou a mesma senha nos dois campos, achando que era
+ * "confirme a senha nova", e a acao falhava toda vez). Digitar o nome de
+ * usuario exato, ja visivel na tela, e igual de dificil de fazer sem
+ * querer e impossivel de confundir com outro campo.
  */
-export async function deleteUser(userId: string, confirmPassword: string): Promise<AdminActionResult> {
+export async function deleteUser(userId: string, confirmUsername: string): Promise<AdminActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -66,8 +46,11 @@ export async function deleteUser(userId: string, confirmPassword: string): Promi
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
   if (roleError || !isAdmin) return { error: "Apenas administradores podem remover contas." };
 
-  const passwordError = await verifyAdminPassword(supabase, user, confirmPassword);
-  if (passwordError) return { error: passwordError };
+  const { data: targetProfile } = await supabase.from("profiles").select("username").eq("id", userId).maybeSingle();
+  if (!targetProfile) return { error: "Conta não encontrada." };
+  if (confirmUsername.trim().toLowerCase() !== targetProfile.username.toLowerCase()) {
+    return { error: `Digite exatamente "${targetProfile.username}" para confirmar.` };
+  }
 
   const admin = createServiceRoleClient();
   const { error } = await admin.auth.admin.deleteUser(userId);
@@ -87,13 +70,11 @@ export async function deleteUser(userId: string, confirmPassword: string): Promi
  * (usuario@contas.studiokids.internal), que ninguem realmente recebe
  * e-mail. "Esqueci minha senha" por e-mail nao funciona pra quase
  * nenhuma conta — quem esquece a senha depende de um admin redefinir
- * aqui.
+ * aqui. So exige ser admin (ja checado abaixo) — nao pede a senha do
+ * proprio admin como confirmacao extra (ver comentario em deleteUser
+ * sobre por que isso confundia mais do que protegia).
  */
-export async function resetUserPassword(
-  userId: string,
-  newPassword: string,
-  confirmPassword: string
-): Promise<AdminActionResult> {
+export async function resetUserPassword(userId: string, newPassword: string): Promise<AdminActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -107,9 +88,6 @@ export async function resetUserPassword(
   if (!parsedPassword.success) {
     return { error: parsedPassword.error.issues[0]?.message ?? "Senha inválida" };
   }
-
-  const passwordError = await verifyAdminPassword(supabase, user, confirmPassword);
-  if (passwordError) return { error: passwordError };
 
   const admin = createServiceRoleClient();
   const { error } = await admin.auth.admin.updateUserById(userId, { password: parsedPassword.data });
