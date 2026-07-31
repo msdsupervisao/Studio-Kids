@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka, Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { Footer } from "@/components/layout/Footer";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${jetbrainsMono.variable} ${fredoka.variable} font-sans`}>
         {children}
         <Toaster position="top-center" richColors closeButton />
+        <Footer />
       </body>
     </html>
   );

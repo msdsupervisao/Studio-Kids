@@ -8,6 +8,7 @@ export const ROUTES = {
   shorts: "/shorts",
   short: (id: string) => `/shorts/${id}`,
   search: "/pesquisa",
+  about: "/sobre",
   login: "/login",
   forgotPassword: "/esqueci-senha",
   maintenance: "/manutencao",
