@@ -176,11 +176,27 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
               <DialogTitle>Redefinir senha de @{user.username}</DialogTitle>
               <p className="text-sm text-muted-foreground">
                 Contas usam nome de usuário, não e-mail de verdade — &quot;esqueci minha senha&quot; por e-mail não
-                funciona para @{user.username}. Defina uma nova senha e avise a pessoa. Digite sua senha para
-                confirmar.
+                funciona para @{user.username}. Defina uma nova senha e avise a pessoa.
               </p>
             </DialogHeader>
             <form onSubmit={handleConfirmReset} className="space-y-4">
+              <div className="space-y-1.5 rounded-lg border border-border bg-secondary/50 p-3">
+                <Label htmlFor={`reset-confirm-password-${user.id}`}>
+                  Sua senha de admin{" "}
+                  <span className="font-normal text-muted-foreground">(pra confirmar que é você)</span>
+                </Label>
+                <PasswordInput
+                  id={`reset-confirm-password-${user.id}`}
+                  value={resetConfirmPassword}
+                  onChange={(event) => setResetConfirmPassword(event.target.value)}
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  A senha que <strong>você</strong> usa pra entrar — não a senha nova de @{user.username} abaixo.
+                </p>
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`new-password-${user.id}`}>Nova senha de @{user.username}</Label>
                 <PasswordInput
@@ -188,22 +204,17 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   autoComplete="new-password"
-                  autoFocus
                   minLength={8}
                   required
                 />
                 <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, 1 maiúscula e 1 número.</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`reset-confirm-password-${user.id}`}>Sua senha</Label>
-                <PasswordInput
-                  id={`reset-confirm-password-${user.id}`}
-                  value={resetConfirmPassword}
-                  onChange={(event) => setResetConfirmPassword(event.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
+              {newPassword && resetConfirmPassword && newPassword === resetConfirmPassword && (
+                <p className="text-sm text-destructive">
+                  Os dois campos estão iguais — isso costuma ser engano (repetiram a senha nova ali em cima em vez da
+                  sua senha de admin). Confira antes de continuar.
+                </p>
+              )}
               <div className="flex justify-end gap-2">
                 <DialogClose asChild>
                   <Button type="button" variant="ghost">
