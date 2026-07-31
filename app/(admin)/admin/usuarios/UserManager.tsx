@@ -89,42 +89,42 @@ function UserRow({ user, isSelf, onDeleted }: { user: Profile; isSelf: boolean; 
     const previousRole = role;
     setRole(nextRole);
     startTransition(async () => {
-      try {
-        await updateUserRole(user.id, nextRole);
-        toast.success("Papel atualizado");
-      } catch (error) {
+      const result = await updateUserRole(user.id, nextRole);
+      if (result.error) {
         setRole(previousRole);
-        toast.error(error instanceof Error ? error.message : "Falha ao atualizar papel");
+        toast.error(result.error);
+        return;
       }
+      toast.success("Papel atualizado");
     });
   }
 
   function handleConfirmDelete(event: React.FormEvent) {
     event.preventDefault();
     startDeleteTransition(async () => {
-      try {
-        await deleteUser(user.id, confirmPassword);
-        toast.success("Conta removida");
-        setDeleteDialogOpen(false);
-        onDeleted();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao remover conta");
+      const result = await deleteUser(user.id, confirmPassword);
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+      toast.success("Conta removida");
+      setDeleteDialogOpen(false);
+      onDeleted();
     });
   }
 
   function handleConfirmReset(event: React.FormEvent) {
     event.preventDefault();
     startResetTransition(async () => {
-      try {
-        await resetUserPassword(user.id, newPassword, resetConfirmPassword);
-        toast.success(`Senha de @${user.username} redefinida`);
-        setResetDialogOpen(false);
-        setNewPassword("");
-        setResetConfirmPassword("");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao redefinir senha");
+      const result = await resetUserPassword(user.id, newPassword, resetConfirmPassword);
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+      toast.success(`Senha de @${user.username} redefinida`);
+      setResetDialogOpen(false);
+      setNewPassword("");
+      setResetConfirmPassword("");
     });
   }
 

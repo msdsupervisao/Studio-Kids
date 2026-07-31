@@ -23,8 +23,9 @@ describe("updateUserRole", () => {
     client.from.mockReturnValueOnce({ update });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await updateUserRole(OTHER_USER_ID, "professor");
+    const result = await updateUserRole(OTHER_USER_ID, "professor");
 
+    expect(result).toEqual({});
     expect(update).toHaveBeenCalledWith({ role: "professor" });
   });
 
@@ -33,9 +34,9 @@ describe("updateUserRole", () => {
     client.from.mockReturnValueOnce(queryResult({ error: { message: "falhou" } }));
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(updateUserRole(OTHER_USER_ID, "professor")).rejects.toThrow(
-      "Falha ao atualizar papel do usuário"
-    );
+    const result = await updateUserRole(OTHER_USER_ID, "professor");
+
+    expect(result.error).toContain("Falha ao atualizar papel do usuário");
   });
 });
 
@@ -48,14 +49,18 @@ describe("deleteUser", () => {
     const client = createMockSupabaseClient(null);
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Sessão expirada");
+    const result = await deleteUser(OTHER_USER_ID, "senha123");
+
+    expect(result.error).toContain("Sessão expirada");
   });
 
   it("recusa remover a própria conta", async () => {
     const client = createMockSupabaseClient({ id: "admin-1" });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser("admin-1", "senha123")).rejects.toThrow("não pode remover sua própria conta");
+    const result = await deleteUser("admin-1", "senha123");
+
+    expect(result.error).toContain("não pode remover sua própria conta");
     expect(client.rpc).not.toHaveBeenCalled();
   });
 
@@ -64,7 +69,9 @@ describe("deleteUser", () => {
     client.rpc.mockResolvedValue({ data: false, error: null });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Apenas administradores podem remover contas");
+    const result = await deleteUser(OTHER_USER_ID, "senha123");
+
+    expect(result.error).toContain("Apenas administradores podem remover contas");
   });
 
   it("recusa sem senha de confirmação", async () => {
@@ -72,7 +79,9 @@ describe("deleteUser", () => {
     client.rpc.mockResolvedValue({ data: true, error: null });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID, "")).rejects.toThrow("Digite sua senha");
+    const result = await deleteUser(OTHER_USER_ID, "");
+
+    expect(result.error).toContain("Digite sua senha");
   });
 
   it("recusa quando a senha de confirmação está incorreta", async () => {
@@ -81,7 +90,9 @@ describe("deleteUser", () => {
     client.auth.signInWithPassword.mockResolvedValue({ data: null, error: { message: "invalid" } });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(deleteUser(OTHER_USER_ID, "senha-errada")).rejects.toThrow("Senha incorreta");
+    const result = await deleteUser(OTHER_USER_ID, "senha-errada");
+
+    expect(result.error).toContain("Senha incorreta");
   });
 
   it("apaga a conta via service role quando autorizado", async () => {
@@ -94,8 +105,9 @@ describe("deleteUser", () => {
       auth: { admin: { deleteUser: deleteUserAdmin } },
     } as never);
 
-    await deleteUser(OTHER_USER_ID, "senha123");
+    const result = await deleteUser(OTHER_USER_ID, "senha123");
 
+    expect(result).toEqual({});
     expect(deleteUserAdmin).toHaveBeenCalledWith(OTHER_USER_ID);
   });
 
@@ -109,7 +121,9 @@ describe("deleteUser", () => {
       auth: { admin: { deleteUser: deleteUserAdmin } },
     } as never);
 
-    await expect(deleteUser(OTHER_USER_ID, "senha123")).rejects.toThrow("Falha ao remover conta");
+    const result = await deleteUser(OTHER_USER_ID, "senha123");
+
+    expect(result.error).toContain("Falha ao remover conta");
   });
 });
 
@@ -122,7 +136,9 @@ describe("resetUserPassword", () => {
     const client = createMockSupabaseClient(null);
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow("Sessão expirada");
+    const result = await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
+
+    expect(result.error).toContain("Sessão expirada");
   });
 
   it("recusa quando quem chama não é admin", async () => {
@@ -130,9 +146,9 @@ describe("resetUserPassword", () => {
     client.rpc.mockResolvedValue({ data: false, error: null });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow(
-      "Apenas administradores podem redefinir senhas"
-    );
+    const result = await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
+
+    expect(result.error).toContain("Apenas administradores podem redefinir senhas");
   });
 
   it("recusa senha nova fraca", async () => {
@@ -140,7 +156,9 @@ describe("resetUserPassword", () => {
     client.rpc.mockResolvedValue({ data: true, error: null });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(resetUserPassword(OTHER_USER_ID, "curta", "senha123")).rejects.toThrow("Mínimo de 8 caracteres");
+    const result = await resetUserPassword(OTHER_USER_ID, "curta", "senha123");
+
+    expect(result.error).toContain("Mínimo de 8 caracteres");
   });
 
   it("recusa quando a senha do admin está incorreta", async () => {
@@ -149,7 +167,9 @@ describe("resetUserPassword", () => {
     client.auth.signInWithPassword.mockResolvedValue({ data: null, error: { message: "invalid" } });
     vi.mocked(createClient).mockResolvedValue(client as never);
 
-    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha-errada")).rejects.toThrow("Senha incorreta");
+    const result = await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha-errada");
+
+    expect(result.error).toContain("Senha incorreta");
   });
 
   it("redefine a senha via service role quando autorizado", async () => {
@@ -162,8 +182,9 @@ describe("resetUserPassword", () => {
       auth: { admin: { updateUserById } },
     } as never);
 
-    await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
+    const result = await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
 
+    expect(result).toEqual({});
     expect(updateUserById).toHaveBeenCalledWith(OTHER_USER_ID, { password: "SenhaNova1" });
   });
 
@@ -177,8 +198,8 @@ describe("resetUserPassword", () => {
       auth: { admin: { updateUserById } },
     } as never);
 
-    await expect(resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123")).rejects.toThrow(
-      "Falha ao redefinir senha"
-    );
+    const result = await resetUserPassword(OTHER_USER_ID, "SenhaNova1", "senha123");
+
+    expect(result.error).toContain("Falha ao redefinir senha");
   });
 });

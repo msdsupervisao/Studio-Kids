@@ -9,11 +9,19 @@ import type { UserRole } from "@/types/user.types";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
-export async function updateUserRole(userId: string, role: UserRole) {
+export interface AdminActionResult {
+  error?: string;
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<AdminActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
-  if (error) throw new Error(`Falha ao atualizar papel do usuário: ${error.message}`);
+  if (error) {
+    console.error("[updateUserRole] falha ao atualizar papel:", error);
+    return { error: `Falha ao atualizar papel do usuário: ${error.message}` };
+  }
   revalidatePath(ROUTES.adminUsers);
+  return {};
 }
 
 /**
@@ -22,11 +30,23 @@ export async function updateUserRole(userId: string, role: UserRole) {
  * (definir a senha de outra pessoa). Um simples confirm() do navegador
  * nao protege contra clique acidental nem prova que quem esta na frente
  * da tela ainda e o admin (sessao pode ter ficado aberta na sala).
+ *
+ * Retorna a mensagem de erro em vez de lancar excecao — Server Actions
+ * chamadas como funcao comum (nao via <form action>) tem a mensagem de
+ * qualquer erro LANCADO escondida pelo Next.js em producao (vira "An
+ * error occurred in the Server Components render..." sem pista nenhuma
+ * do motivo real, mesmo pra erro esperado tipo senha errada). Retornar
+ * como dado normal evita esse problema inteiramente.
  */
-async function verifyAdminPassword(supabase: SupabaseServerClient, user: User, confirmPassword: string) {
-  if (!confirmPassword) throw new Error("Digite sua senha para confirmar.");
+async function verifyAdminPassword(
+  supabase: SupabaseServerClient,
+  user: User,
+  confirmPassword: string
+): Promise<string | null> {
+  if (!confirmPassword) return "Digite sua senha para confirmar.";
   const { error } = await supabase.auth.signInWithPassword({ email: user.email ?? "", password: confirmPassword });
-  if (error) throw new Error("Senha incorreta.");
+  if (error) return "Senha incorreta.";
+  return null;
 }
 
 /**
@@ -35,24 +55,29 @@ async function verifyAdminPassword(supabase: SupabaseServerClient, user: User, c
  * usuario de autenticacao so e possivel pela Admin API, nao por uma
  * query comum na tabela profiles.
  */
-export async function deleteUser(userId: string, confirmPassword: string) {
+export async function deleteUser(userId: string, confirmPassword: string): Promise<AdminActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
-  if (user.id === userId) throw new Error("Você não pode remover sua própria conta.");
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
+  if (user.id === userId) return { error: "Você não pode remover sua própria conta." };
 
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  if (roleError || !isAdmin) throw new Error("Apenas administradores podem remover contas.");
+  if (roleError || !isAdmin) return { error: "Apenas administradores podem remover contas." };
 
-  await verifyAdminPassword(supabase, user, confirmPassword);
+  const passwordError = await verifyAdminPassword(supabase, user, confirmPassword);
+  if (passwordError) return { error: passwordError };
 
   const admin = createServiceRoleClient();
   const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) throw new Error(`Falha ao remover conta: ${error.message}`);
+  if (error) {
+    console.error("[deleteUser] falha na Admin API:", error);
+    return { error: `Falha ao remover conta: ${error.message}` };
+  }
 
   revalidatePath(ROUTES.adminUsers);
+  return {};
 }
 
 /**
@@ -64,22 +89,34 @@ export async function deleteUser(userId: string, confirmPassword: string) {
  * nenhuma conta — quem esquece a senha depende de um admin redefinir
  * aqui.
  */
-export async function resetUserPassword(userId: string, newPassword: string, confirmPassword: string) {
+export async function resetUserPassword(
+  userId: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<AdminActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessão expirada. Faça login novamente.");
+  if (!user) return { error: "Sessão expirada. Faça login novamente." };
 
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-  if (roleError || !isAdmin) throw new Error("Apenas administradores podem redefinir senhas.");
+  if (roleError || !isAdmin) return { error: "Apenas administradores podem redefinir senhas." };
 
   const parsedPassword = passwordSchema.safeParse(newPassword);
-  if (!parsedPassword.success) throw new Error(parsedPassword.error.issues[0]?.message ?? "Senha inválida");
+  if (!parsedPassword.success) {
+    return { error: parsedPassword.error.issues[0]?.message ?? "Senha inválida" };
+  }
 
-  await verifyAdminPassword(supabase, user, confirmPassword);
+  const passwordError = await verifyAdminPassword(supabase, user, confirmPassword);
+  if (passwordError) return { error: passwordError };
 
   const admin = createServiceRoleClient();
   const { error } = await admin.auth.admin.updateUserById(userId, { password: parsedPassword.data });
-  if (error) throw new Error(`Falha ao redefinir senha: ${error.message}`);
+  if (error) {
+    console.error("[resetUserPassword] falha na Admin API:", error);
+    return { error: `Falha ao redefinir senha: ${error.message}` };
+  }
+
+  return {};
 }
