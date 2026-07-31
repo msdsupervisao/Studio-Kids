@@ -139,7 +139,8 @@ export function ChannelPostComposer({
           {image.preview ? (
             <div className="relative">
               <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
-                <Image src={image.preview} alt="" fill className="object-cover" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- preview e uma blob: URL local, fora do escopo do otimizador de imagem do Next. */}
+                <img src={image.preview} alt="" className="h-full w-full object-cover" />
               </div>
               <button
                 type="button"
@@ -175,7 +176,8 @@ export function ChannelPostComposer({
               {slot.preview ? (
                 <div className="relative">
                   <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
-                    <Image src={slot.preview} alt="" fill className="object-cover" />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- preview e uma blob: URL local, fora do escopo do otimizador de imagem do Next. */}
+                    <img src={slot.preview} alt="" className="h-full w-full object-cover" />
                   </div>
                   <button
                     type="button"

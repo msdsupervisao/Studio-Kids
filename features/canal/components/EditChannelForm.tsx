@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,10 @@ export function EditChannelForm({ channel }: { channel: Channel }) {
       <div className="space-y-1.5">
         <Label>Banner</Label>
         <div className="relative h-32 w-full overflow-hidden rounded-xl bg-secondary sm:h-40">
-          {bannerPreview && <Image src={bannerPreview} alt="" fill sizes="100vw" className="object-cover" />}
+          {bannerPreview && (
+            // eslint-disable-next-line @next/next/no-img-element -- preview pode ser uma blob: URL local, fora do escopo do otimizador de imagem do Next.
+            <img src={bannerPreview} alt="" className="h-full w-full object-cover" />
+          )}
         </div>
         <Input
           type="file"
