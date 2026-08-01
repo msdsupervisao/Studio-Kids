@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Pesquisa" };
 
 const TABS = [
-  { value: "videos", label: "Vídeos" },
   { value: "canais", label: "Canais" },
+  { value: "videos", label: "Vídeos" },
   { value: "playlists", label: "Playlists" },
 ] as const;
 
@@ -33,7 +33,7 @@ export default async function SearchPage({
     return <EmptyState icon={SearchX} title="Digite algo na busca para começar" />;
   }
 
-  const activeTab: SearchTab = TABS.some((t) => t.value === tab) ? (tab as SearchTab) : "videos";
+  const activeTab: SearchTab = TABS.some((t) => t.value === tab) ? (tab as SearchTab) : "canais";
 
   const [videos, channels, playlists] = await Promise.all([
     activeTab === "videos" ? searchVideos(query) : Promise.resolve([]),
