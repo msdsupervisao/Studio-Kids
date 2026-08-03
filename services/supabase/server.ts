@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sessionOnlyCookieOptions } from "@/services/supabase/cookie-options";
 import type { Database } from "@/types/database.types";
 
 /**
@@ -23,7 +24,7 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
+              cookieStore.set(name, value, sessionOnlyCookieOptions(options));
             });
           } catch {
             // Chamado a partir de um Server Component — ignorado de proposito.
