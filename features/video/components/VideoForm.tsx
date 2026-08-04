@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoUploadDropzone } from "@/features/video/components/VideoUploadDropzone";
 import { AIGenerateButton } from "@/features/ia/components/AIGenerateButton";
+import { generateVideoThumbnail } from "@/features/video/utils/generate-thumbnail";
 import { useUpload } from "@/hooks/use-upload";
 import { cn } from "@/lib/utils";
 import type { Channel } from "@/types/channel.types";
@@ -33,12 +34,45 @@ export function VideoForm({
   const [categoryId, setCategoryId] = useState<string>("");
   const [channelId, setChannelId] = useState<string>(channels[0]?.id ?? "");
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [autoThumbnailFile, setAutoThumbnailFile] = useState<File | null>(null);
+  const [customThumbnailFile, setCustomThumbnailFile] = useState<File | null>(null);
   const [duration, setDuration] = useState(0);
   const [isShort, setIsShort] = useState(false);
   const { submit, phase, progress, isSubmitting } = useUpload(targetPlaylistId);
 
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string | null>(null);
+  const effectiveThumbnailFile = customThumbnailFile ?? autoThumbnailFile;
   const shortTooLong = isShort && duration > SHORT_MAX_SECONDS;
+
+  useEffect(() => {
+    if (!videoFile) {
+      setAutoThumbnailFile(null);
+      setIsGeneratingThumbnail(false);
+      return;
+    }
+    let cancelled = false;
+    setAutoThumbnailFile(null);
+    setIsGeneratingThumbnail(true);
+    generateVideoThumbnail(videoFile).then((file) => {
+      if (cancelled) return;
+      setAutoThumbnailFile(file);
+      setIsGeneratingThumbnail(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [videoFile]);
+
+  useEffect(() => {
+    if (!effectiveThumbnailFile) {
+      setThumbnailPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(effectiveThumbnailFile);
+    setThumbnailPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [effectiveThumbnailFile]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -50,7 +84,7 @@ export function VideoForm({
       description,
       categoryId: categoryId || null,
       videoFile,
-      thumbnailFile,
+      thumbnailFile: effectiveThumbnailFile,
       durationSeconds: duration,
       isShort,
     });
@@ -166,12 +200,27 @@ export function VideoForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="thumbnail">Miniatura (opcional)</Label>
+        <Label htmlFor="thumbnail">Miniatura</Label>
+        <p className="text-xs text-muted-foreground">
+          {isGeneratingThumbnail
+            ? "Gerando miniatura automaticamente a partir do vídeo…"
+            : effectiveThumbnailFile
+              ? "Gerada automaticamente a partir de um frame do vídeo. Envie uma imagem abaixo para usar outra."
+              : "Não foi possível gerar uma miniatura automática para este vídeo. Envie uma imagem abaixo (opcional)."}
+        </p>
+        {thumbnailPreviewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- preview e uma blob: URL local, fora do escopo do otimizador de imagem do Next.
+          <img
+            src={thumbnailPreviewUrl}
+            alt="Prévia da miniatura"
+            className="aspect-video w-full max-w-xs rounded-xl border border-border object-cover"
+          />
+        )}
         <Input
           id="thumbnail"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(event) => setThumbnailFile(event.target.files?.[0] ?? null)}
+          onChange={(event) => setCustomThumbnailFile(event.target.files?.[0] ?? null)}
         />
       </div>
 
