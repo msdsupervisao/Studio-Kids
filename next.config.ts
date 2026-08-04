@@ -4,17 +4,32 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : undefined;
 
+const r2Host = process.env.NEXT_PUBLIC_R2_PUBLIC_URL
+  ? new URL(process.env.NEXT_PUBLIC_R2_PUBLIC_URL).hostname
+  : undefined;
+
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: supabaseHost
-      ? [
-          {
-            protocol: "https",
-            hostname: supabaseHost,
-            pathname: "/storage/v1/object/public/**",
-          },
-        ]
-      : [],
+    remotePatterns: [
+      ...(supabaseHost
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseHost,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
+      ...(r2Host
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: r2Host,
+              pathname: "/**",
+            },
+          ]
+        : []),
+    ],
   },
   experimental: {
     // Server Actions tem limite padrao de 1MB no corpo da requisicao.
