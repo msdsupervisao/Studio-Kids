@@ -204,9 +204,11 @@ export function VideoForm({
         <p className="text-xs text-muted-foreground">
           {isGeneratingThumbnail
             ? "Gerando miniatura automaticamente a partir do vídeo…"
-            : effectiveThumbnailFile
-              ? "Gerada automaticamente a partir de um frame do vídeo. Envie uma imagem abaixo para usar outra."
-              : "Não foi possível gerar uma miniatura automática para este vídeo. Envie uma imagem abaixo (opcional)."}
+            : customThumbnailFile
+              ? "Usando a imagem que você enviou."
+              : effectiveThumbnailFile
+                ? "Gerada automaticamente a partir de um frame do vídeo. Envie uma imagem abaixo para usar outra."
+                : "Não foi possível gerar uma miniatura automática para este vídeo. Envie uma imagem abaixo (opcional)."}
         </p>
         {thumbnailPreviewUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- preview e uma blob: URL local, fora do escopo do otimizador de imagem do Next.
