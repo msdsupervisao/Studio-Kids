@@ -5,6 +5,8 @@ export interface StatItem {
   label: string;
   value: number;
   icon: LucideIcon;
+  /** Sobrescreve a formatacao padrao (numero compacto) — ex: bytes em "2.3 GB". */
+  formatter?: (value: number) => string;
 }
 
 export function StatsCards({ items }: { items: StatItem[] }) {
@@ -13,7 +15,9 @@ export function StatsCards({ items }: { items: StatItem[] }) {
       {items.map((item) => (
         <div key={item.label} className="rounded-xl border border-border p-4">
           <item.icon className="mb-2 h-5 w-5 text-primary" />
-          <p className="text-2xl font-semibold tracking-tight">{formatCompactNumber(item.value)}</p>
+          <p className="text-2xl font-semibold tracking-tight">
+            {(item.formatter ?? formatCompactNumber)(item.value)}
+          </p>
           <p className="text-xs text-muted-foreground">{item.label}</p>
         </div>
       ))}

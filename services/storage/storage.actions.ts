@@ -1,6 +1,6 @@
 "use server";
 
-import { createR2PresignedUploadUrl, deleteR2Objects } from "@/services/storage/r2";
+import { createR2PresignedUploadUrl, deleteR2Objects, listAllR2Objects } from "@/services/storage/r2";
 import { createClient } from "@/services/supabase/server";
 
 /**
@@ -26,4 +26,34 @@ export async function deleteR2UploadedObjects(bucket: string, paths: string[]): 
   if (paths.length === 0) return;
   await requireLoggedInUser();
   await deleteR2Objects(paths.map((path) => `${bucket}/${path}`));
+}
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: isAdmin, error } = await supabase.rpc("is_admin");
+  if (error || !isAdmin) throw new Error("Apenas administradores podem ver o uso de armazenamento.");
+}
+
+export interface R2StorageUsage {
+  totalBytes: number;
+  totalObjects: number;
+  byBucket: Record<string, { bytes: number; objects: number }>;
+}
+
+/** Soma o espaco usado no R2 por "bucket" logico (prefixo da chave) — so admin ve. */
+export async function getR2StorageUsage(): Promise<R2StorageUsage> {
+  await requireAdmin();
+  const objects = await listAllR2Objects();
+
+  const byBucket: Record<string, { bytes: number; objects: number }> = {};
+  let totalBytes = 0;
+  for (const { key, size } of objects) {
+    const bucket = key.split("/")[0] ?? "outro";
+    byBucket[bucket] ??= { bytes: 0, objects: 0 };
+    byBucket[bucket].bytes += size;
+    byBucket[bucket].objects += 1;
+    totalBytes += size;
+  }
+
+  return { totalBytes, totalObjects: objects.length, byBucket };
 }

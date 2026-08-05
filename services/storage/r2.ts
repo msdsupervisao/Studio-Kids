@@ -1,4 +1,4 @@
-import { DeleteObjectsCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -52,6 +52,29 @@ export async function createR2PresignedUploadUrl(key: string, contentType: strin
     ContentType: contentType || "application/octet-stream",
   });
   return getSignedUrl(r2Client(), command, { expiresIn: PRESIGNED_UPLOAD_EXPIRES_SECONDS });
+}
+
+/**
+ * Lista todo objeto no bucket (paginado, 1000 por vez) com sua chave e
+ * tamanho — usado pelo painel admin pra somar o total de espaco usado.
+ * Bucket unico com tudo dentro (videos/thumbnails/avatars/...), entao uma
+ * unica varredura sem prefixo cobre tudo.
+ */
+export async function listAllR2Objects(): Promise<Array<{ key: string; size: number }>> {
+  const objects: Array<{ key: string; size: number }> = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const response = await r2Client().send(
+      new ListObjectsV2Command({ Bucket: r2BucketName(), ContinuationToken: continuationToken })
+    );
+    for (const obj of response.Contents ?? []) {
+      if (obj.Key) objects.push({ key: obj.Key, size: obj.Size ?? 0 });
+    }
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return objects;
 }
 
 export async function deleteR2Objects(keys: string[]): Promise<void> {

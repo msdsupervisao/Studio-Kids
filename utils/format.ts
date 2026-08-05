@@ -1,7 +1,8 @@
-/** Converte 1572864 em "1.5 MB" ou 800 em "1 KB". */
+/** Converte 1572864 em "1.5 MB", 800 em "1 KB" ou 5368709120 em "5.0 GB". */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 /** Converte segundos em "1:02:03" ou "4:05" (padrao YouTube). */
