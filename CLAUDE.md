@@ -28,6 +28,7 @@ Autorizacao permanente, valida em qualquer sessao: nao pergunte antes de agir.
 - R2 nao tem RLS como o Supabase Storage — `storage.actions.ts` checa login manualmente (`requireLoggedInUser`) antes de gerar URL assinada de upload ou apagar objeto.
 - Upload vai direto do navegador pro R2 via URL assinada (PUT, expira em 10min) — nao passa pelo servidor Next.js. Por isso falha de upload NAO aparece nos logs do Vercel; so no network tab do navegador, ou testando a URL assinada direto (curl PUT). Pra diagnosticar upload quebrado, testar pela UI real (conta descartavel, ver secao abaixo), nao so ler logs do servidor.
 - `MAINTENANCE_MODE` (env var) liga uma tela de manutencao via middleware, sem precisar de deploy — usado durante a migracao de storage.
+- `/admin/storage` mostra o espaco usado (soma real de bytes, nao so contagem de pasta) com barra de % contra `STORAGE_QUOTA_GB` (env var, padrao 10 = tier gratis do R2) — R2 nao tem teto real, e so uma referencia visual, nao bloqueia upload ao passar.
 - Scripts manuais de operacao em `scripts/` (inventario, migracao, CORS, backfill de miniatura, verificacao de tamanho) — leem credenciais do `.env.local`, rodar da raiz do projeto (precisam do `node_modules` daqui).
 
 ## Testando funcionalidades que exigem login
