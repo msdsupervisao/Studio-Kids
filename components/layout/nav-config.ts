@@ -3,6 +3,7 @@ import {
   CheckSquare,
   Clock3,
   FolderCog,
+  HardDrive,
   Heart,
   History,
   Home,
@@ -72,5 +73,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Moderação", href: ROUTES.adminUploads, icon: CheckSquare },
   { label: "Categorias", href: ROUTES.adminCategories, icon: Tags },
   { label: "Usuários", href: ROUTES.adminUsers, icon: Users },
+  { label: "Storage", href: ROUTES.adminStorage, icon: HardDrive },
   { label: "Configurações", href: ROUTES.adminSettings, icon: Settings },
 ];
