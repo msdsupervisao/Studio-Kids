@@ -4,7 +4,8 @@ import { Film, HardDrive, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/services/supabase/server";
 import { getR2StorageUsage } from "@/services/storage/storage.actions";
 import { StatsCards } from "@/features/estatisticas/components/StatsCards";
-import { STORAGE_BUCKETS, STORAGE_PROVIDER } from "@/lib/constants";
+import { Progress } from "@/components/ui/progress";
+import { STORAGE_BUCKETS, STORAGE_PROVIDER, STORAGE_QUOTA_GB } from "@/lib/constants";
 import { formatBytes } from "@/utils/format";
 import type { Database } from "@/types/database.types";
 
@@ -64,6 +65,11 @@ export default async function AdminStoragePage() {
   const videoBucketBytes = usage.byBucket[STORAGE_BUCKETS.videos]?.bytes ?? 0;
   const thumbnailBucketBytes = usage.byBucket[STORAGE_BUCKETS.thumbnails]?.bytes ?? 0;
 
+  const quotaBytes = STORAGE_QUOTA_GB * 1024 ** 3;
+  const percentUsed = Math.min(100, (usage.totalBytes / quotaBytes) * 100);
+  const availableBytes = Math.max(0, quotaBytes - usage.totalBytes);
+  const indicatorColor = percentUsed >= 90 ? "bg-destructive" : percentUsed >= 70 ? "bg-amber-500" : undefined;
+
   return (
     <div className="space-y-6">
       <div>
@@ -72,6 +78,21 @@ export default async function AdminStoragePage() {
           Uso de armazenamento em {STORAGE_PROVIDER === "r2" ? "Cloudflare R2" : "Supabase Storage"}.
         </p>
       </div>
+
+      <div className="rounded-xl border border-border p-4">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <p className="text-sm font-medium">
+            {formatBytes(usage.totalBytes)} usados de {STORAGE_QUOTA_GB} GB
+          </p>
+          <p className="text-xs text-muted-foreground">{percentUsed.toFixed(1)}%</p>
+        </div>
+        <Progress value={percentUsed} indicatorClassName={indicatorColor} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          {formatBytes(availableBytes)} disponíveis até {STORAGE_QUOTA_GB} GB — referência do tier grátis do R2, não
+          um limite real: passar disso só passa a cobrar por GB, sem bloquear upload.
+        </p>
+      </div>
+
       <StatsCards
         items={[
           { label: "Espaço usado no total", value: usage.totalBytes, icon: HardDrive, formatter: formatBytes },

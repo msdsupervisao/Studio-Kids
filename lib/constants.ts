@@ -84,3 +84,11 @@ export const STORAGE_BUCKETS = {
  */
 export const STORAGE_PROVIDER: "supabase" | "r2" =
   process.env.NEXT_PUBLIC_STORAGE_PROVIDER === "r2" ? "r2" : "supabase";
+
+/**
+ * R2 nao tem um teto real de espaco (cobra por GB usado, sem bloquear nada
+ * ao ultrapassar) — este numero e so uma referencia pro painel admin saber
+ * quanto % do "orcamento" ja foi usado. Padrao 10GB = tier gratis do R2;
+ * ajustar essa env var se contratar mais espaco.
+ */
+export const STORAGE_QUOTA_GB = Number(process.env.STORAGE_QUOTA_GB) || 10;
