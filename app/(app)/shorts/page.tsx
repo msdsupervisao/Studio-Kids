@@ -3,11 +3,12 @@ import { Zap } from "lucide-react";
 import { listShortsFeed } from "@/features/shorts/actions/shorts.actions";
 import { ShortsFeed } from "@/features/shorts/components/ShortsFeed";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { getCurrentUser } from "@/features/auth/actions/auth.actions";
 
 export const metadata: Metadata = { title: "Shorts" };
 
 export default async function ShortsPage() {
-  const items = await listShortsFeed();
+  const [items, initialUser] = await Promise.all([listShortsFeed(), getCurrentUser()]);
 
   if (items.length === 0) {
     return (
@@ -19,5 +20,5 @@ export default async function ShortsPage() {
     );
   }
 
-  return <ShortsFeed items={items} />;
+  return <ShortsFeed items={items} initialUser={initialUser} />;
 }

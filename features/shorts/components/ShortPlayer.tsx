@@ -13,9 +13,10 @@ import { ROUTES } from "@/lib/constants";
 import { formatCompactNumber } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import type { VideoReactionType } from "@/types/database.types";
+import type { CurrentUser } from "@/types/user.types";
 
-export function ShortPlayer({ item }: { item: ShortFeedItem }) {
-  const { user } = useUser();
+export function ShortPlayer({ item, initialUser }: { item: ShortFeedItem; initialUser: CurrentUser | null }) {
+  const { user } = useUser(initialUser);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasCountedView = useRef(false);
