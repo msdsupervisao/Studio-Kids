@@ -58,6 +58,7 @@ export const UPLOAD_LIMITS = {
   maxThumbnailSizeBytes: 5 * 1024 * 1024, // 5MB
   allowedVideoTypes: ["video/mp4", "video/webm", "video/quicktime"],
   allowedImageTypes: ["image/jpeg", "image/png", "image/webp"],
+  shortMaxDurationSeconds: 60,
 } as const;
 
 export const PAGE_SIZE = {

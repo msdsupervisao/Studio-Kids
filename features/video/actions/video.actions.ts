@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/services/supabase/server";
 import { createStorageService } from "@/services/storage/storage.service";
-import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, PAGE_SIZE, ROUTES, UPLOAD_LIMITS } from "@/lib/constants";
 import { slugify } from "@/utils/slug";
 import { sanitizeMultilineText, sanitizePlainText } from "@/utils/sanitize";
 import { createDraftVideoSchema, updateVideoSchema, videoModerationSchema } from "@/lib/validations";
@@ -379,6 +379,8 @@ export interface VideoForEdit {
   title: string;
   description: string;
   thumbnailUrl: string | null;
+  isShort: boolean;
+  durationSeconds: number;
 }
 
 /** Retorna null se o video nao existe ou o usuario nao e dono do canal / admin. */
@@ -392,7 +394,7 @@ export async function getVideoForEdit(videoId: string): Promise<VideoForEdit | n
 
   const { data, error } = await supabase
     .from("videos")
-    .select("id, channel_id, category_id, title, description, thumbnail_path")
+    .select("id, channel_id, category_id, title, description, thumbnail_path, is_short, duration_seconds")
     .eq("id", videoId)
     .single();
   if (error || !data) return null;
@@ -410,6 +412,8 @@ export async function getVideoForEdit(videoId: string): Promise<VideoForEdit | n
     title: data.title,
     description: data.description ?? "",
     thumbnailUrl: storage.getPublicUrl(STORAGE_BUCKETS.thumbnails, data.thumbnail_path),
+    isShort: data.is_short,
+    durationSeconds: data.duration_seconds,
   };
 }
 
@@ -417,6 +421,7 @@ export interface UpdateVideoInput {
   title: string;
   description: string;
   categoryId: string | null;
+  isShort: boolean;
 }
 
 export async function updateVideo(videoId: string, input: UpdateVideoInput) {
@@ -424,6 +429,16 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput) {
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Dados do vídeo inválidos");
 
   const supabase = await createClient();
+
+  if (parsed.data.isShort) {
+    const { data: current } = await supabase.from("videos").select("duration_seconds").eq("id", videoId).single();
+    if (current && current.duration_seconds > UPLOAD_LIMITS.shortMaxDurationSeconds) {
+      throw new Error(
+        `Shorts devem ter até ${UPLOAD_LIMITS.shortMaxDurationSeconds} segundos — esse vídeo tem ${current.duration_seconds}s.`
+      );
+    }
+  }
+
   const { error } = await supabase
     .from("videos")
     .update({
@@ -431,12 +446,14 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput) {
       slug: slugify(parsed.data.title),
       description: parsed.data.description ? sanitizeMultilineText(parsed.data.description) : null,
       category_id: parsed.data.categoryId,
+      is_short: parsed.data.isShort,
     })
     .eq("id", videoId);
 
   if (error) throw new Error(`Falha ao salvar alterações: ${error.message}`);
   revalidatePath(ROUTES.professorVideos);
   revalidatePath(ROUTES.video(videoId));
+  revalidatePath(ROUTES.shorts);
 }
 
 export async function updateVideoThumbnail(videoId: string, thumbnailPath: string) {

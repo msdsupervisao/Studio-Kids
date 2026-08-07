@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/services/supabase/client";
 import { createStorageService } from "@/services/storage/storage.service";
 import { updateVideo, updateVideoThumbnail, type VideoForEdit } from "@/features/video/actions/video.actions";
-import { STORAGE_BUCKETS, ROUTES } from "@/lib/constants";
+import { STORAGE_BUCKETS, ROUTES, UPLOAD_LIMITS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
@@ -21,9 +22,11 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description);
   const [categoryId, setCategoryId] = useState(video.categoryId ?? "");
+  const [isShort, setIsShort] = useState(video.isShort);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(video.thumbnailUrl);
   const [isPending, startTransition] = useTransition();
+  const shortTooLong = isShort && video.durationSeconds > UPLOAD_LIMITS.shortMaxDurationSeconds;
 
   function handleThumbnailChange(file: File | null) {
     setThumbnailFile(file);
@@ -32,9 +35,10 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (shortTooLong) return;
     startTransition(async () => {
       try {
-        await updateVideo(video.id, { title, description, categoryId: categoryId || null });
+        await updateVideo(video.id, { title, description, categoryId: categoryId || null, isShort });
 
         if (thumbnailFile) {
           const supabase = createClient();
@@ -55,6 +59,38 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      <div className="space-y-1.5">
+        <Label>Tipo de vídeo</Label>
+        <div className="inline-flex rounded-lg border border-border p-1">
+          <button
+            type="button"
+            onClick={() => setIsShort(false)}
+            className={cn(
+              "focus-ring rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              !isShort ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Vídeo normal
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsShort(true)}
+            className={cn(
+              "focus-ring rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              isShort ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Short
+          </button>
+        </div>
+        {shortTooLong && (
+          <p className="text-sm text-destructive">
+            Shorts devem ter até {UPLOAD_LIMITS.shortMaxDurationSeconds} segundos — esse vídeo tem{" "}
+            {video.durationSeconds}s. Deixe como vídeo normal ou envie um arquivo mais curto.
+          </p>
+        )}
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="title">Título</Label>
         <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={150} />
@@ -105,7 +141,7 @@ export function EditVideoForm({ video, categories }: { video: VideoForEdit; cate
         />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending || shortTooLong} className="w-full">
         {isPending ? "Salvando..." : "Salvar alterações"}
       </Button>
     </form>

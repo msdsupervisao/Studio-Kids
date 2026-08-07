@@ -92,6 +92,7 @@ export const updateVideoSchema = z.object({
   title: z.string().min(3, "Mínimo de 3 caracteres").max(150),
   description: z.string().max(5000),
   categoryId: z.string().uuid().nullable(),
+  isShort: z.boolean(),
 });
 
 export const videoModerationSchema = z.object({

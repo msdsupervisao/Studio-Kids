@@ -10,13 +10,14 @@ import { VideoUploadDropzone } from "@/features/video/components/VideoUploadDrop
 import { AIGenerateButton } from "@/features/ia/components/AIGenerateButton";
 import { generateVideoThumbnail } from "@/features/video/utils/generate-thumbnail";
 import { useUpload } from "@/hooks/use-upload";
+import { UPLOAD_LIMITS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Channel } from "@/types/channel.types";
 import type { Database } from "@/types/database.types";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 
-const SHORT_MAX_SECONDS = 60;
+const SHORT_MAX_SECONDS = UPLOAD_LIMITS.shortMaxDurationSeconds;
 
 export function VideoForm({
   channels,
