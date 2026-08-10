@@ -20,6 +20,12 @@ Autorizacao permanente, valida em qualquer sessao: nao pergunte antes de agir.
 - RLS: nunca policy consultando a propria tabela em subquery direta (erro 42P17, recursao infinita) — usar funcao `security definer` (ver `is_admin`, `owns_channel`, `comment_parent_in_video`).
 - `SUPABASE_SERVICE_ROLE_KEY` (`.env.local`): so para criar/apagar contas de teste via REST (`/auth/v1/admin/users`) — nunca para testar a app (bypassa RLS).
 
+## Sessao / logout automatico
+
+- Cookie de sessao sem `maxAge`/`expires` de proposito (`services/supabase/cookie-options.ts`) pra sumir quando o navegador fecha de verdade — mas isso depende do navegador realmente fechar (Chrome Sync, "continuar de onde parou", app em segundo plano, ou so nao fechar TODAS as janelas quebram essa garantia).
+- Por isso tambem existe `components/shared/IdleLogoutWatcher.tsx`, montado no `AppShell` — desloga sozinho apos 5 minutos sem atividade (clique, tecla, scroll, touch, ou "timeupdate" de video, pra nao derrubar quem so esta assistindo aula sem mexer no mouse). Independe de comportamento do navegador.
+- Testar isso manualmente e chato: autofill do Chrome sobrescreve os campos de login se vc clicar neles de novo depois de preencher (usar `Tab`/`ctrl+a` antes de digitar, nao confiar em screenshot pra confirmar o valor certo foi submetido) e o timer real usa segundos de verdade — baixar `IDLE_TIMEOUT_MS` temporariamente pra uns 25s pra testar manualmente, nunca esquecer de devolver pra 5 min antes de commitar.
+
 ## Storage (Cloudflare R2)
 
 - Arquivos binarios (video, thumbnail, avatar, banner, post-image) moraram no Supabase Storage e migraram pro Cloudflare R2 (2026-08) — motivo: R2 nao cobra egress, Supabase Storage fica caro em volume de video. Banco (Postgres) e Auth continuam no Supabase, sem mudanca. Deploy do app continua no Vercel, sem mudanca — a migracao foi so do storage, nao "tudo pra um servidor novo".

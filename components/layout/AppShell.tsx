@@ -2,6 +2,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { Sidebar, type SidebarVariant } from "@/components/layout/Sidebar";
 import { SidebarProvider } from "@/components/layout/SidebarProvider";
 import { PlayfulBackground } from "@/components/shared/PlayfulBackground";
+import { IdleLogoutWatcher } from "@/components/shared/IdleLogoutWatcher";
 import { getCurrentUser } from "@/features/auth/actions/auth.actions";
 import { listMySubscribedChannelsForSidebar } from "@/features/canal/actions/channel.actions";
 
@@ -20,6 +21,7 @@ export async function AppShell({
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background">
+        {initialUser && <IdleLogoutWatcher />}
         <Topbar initialUser={initialUser} wallpaper={navVariant === "app"} />
         <div className="flex flex-col md:flex-row">
           <Sidebar variant={navVariant} title={navTitle} subscribedChannels={subscribedChannels} />
