@@ -94,7 +94,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
                   initialLikes={reactions.likesCount}
                   initialReaction={reactions.userReaction}
                 />
-                <ShareButton videoId={video.id} />
+                <ShareButton videoId={video.id} title={video.title} />
                 <WatchLaterButton videoId={video.id} isLoggedIn={Boolean(user)} initialSaved={savedForLater} />
                 <SaveButton videoId={video.id} isLoggedIn={Boolean(user)} initialPlaylists={playlists} />
               </div>

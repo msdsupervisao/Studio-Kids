@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { setVideoReaction } from "@/features/reacoes/actions/reaction.actions";
 import { toggleSubscription } from "@/features/inscricoes/actions/subscription.actions";
 import { incrementShortView, type ShortFeedItem } from "@/features/shorts/actions/shorts.actions";
+import { ShareDialog } from "@/features/video/components/ShareDialog";
 import { useUser } from "@/hooks/use-user";
 import { ROUTES } from "@/lib/constants";
 import { formatCompactNumber } from "@/utils/format";
@@ -103,16 +104,6 @@ export function ShortPlayer({ item, initialUser }: { item: ShortFeedItem; initia
       setSubscribed(!optimistic);
       setSubscribersCount((n) => n + (optimistic ? -1 : 1));
     });
-  }
-
-  async function handleShare() {
-    const url = `${window.location.origin}${ROUTES.short(item.id)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
-    } catch {
-      toast.error("Não foi possível copiar o link");
-    }
   }
 
   const isOwnChannel = user?.id === item.channel.ownerId;
@@ -217,11 +208,17 @@ export function ShortPlayer({ item, initialUser }: { item: ShortFeedItem; initia
               <span className="text-xs font-medium">{formatCompactNumber(item.commentsCount)}</span>
             </Link>
 
-            <button type="button" onClick={handleShare} className="focus-ring flex flex-col items-center gap-1" aria-label="Compartilhar">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40">
-                <Share2 className="h-5 w-5" />
-              </span>
-            </button>
+            <ShareDialog
+              url={typeof window !== "undefined" ? `${window.location.origin}${ROUTES.short(item.id)}` : ROUTES.short(item.id)}
+              title={item.title}
+              trigger={
+                <button type="button" className="focus-ring flex flex-col items-center gap-1" aria-label="Compartilhar">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40">
+                    <Share2 className="h-5 w-5" />
+                  </span>
+                </button>
+              }
+            />
           </div>
         </div>
       </div>
