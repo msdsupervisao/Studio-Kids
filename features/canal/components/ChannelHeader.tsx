@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LayoutDashboard, Pencil, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { FormattedText } from "@/components/shared/FormattedText";
 import { SubscribeButton } from "@/features/inscricoes/components/SubscribeButton";
 import { formatCompactNumber } from "@/utils/format";
 import { ROUTES } from "@/lib/constants";
@@ -69,7 +70,9 @@ export function ChannelHeader({
         )}
       </div>
 
-      {channel.description && <p className="max-w-2xl text-sm text-muted-foreground">{channel.description}</p>}
+      {channel.description && (
+        <FormattedText text={channel.description} className="max-w-2xl text-sm text-muted-foreground" />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FormattedText } from "@/components/shared/FormattedText";
 import { formatCompactNumber, formatRelativeDate } from "@/utils/format";
 
 export function VideoDescription({
@@ -25,7 +26,7 @@ export function VideoDescription({
         {formatCompactNumber(viewsCount)} visualizacoes
         {publishedAt && <> · {formatRelativeDate(publishedAt)}</>}
       </p>
-      <p className={expanded ? "whitespace-pre-wrap" : "line-clamp-2 whitespace-pre-wrap"}>{description}</p>
+      <FormattedText text={description} className={expanded ? undefined : "line-clamp-2"} />
       <span className="mt-2 inline-block text-xs font-semibold text-foreground">
         {expanded ? "Mostrar menos" : "Mostrar mais"}
       </span>
